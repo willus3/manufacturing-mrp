@@ -15,6 +15,8 @@ import SupplierListPage from '@/pages/suppliers/SupplierListPage';
 import SupplierFormPage from '@/pages/suppliers/SupplierFormPage';
 import LocationListPage from '@/pages/locations/LocationListPage';
 import LocationFormPage from '@/pages/locations/LocationFormPage';
+import BOMListPage from '@/pages/boms/BOMListPage';
+import BOMFormPage from '@/pages/boms/BOMFormPage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -53,9 +55,11 @@ const App = () => {
 
           {/* BOMs */}
           <Route element={<ProtectedRoute permission="bom:read" />}>
-            <Route path="/boms" element={<PlaceholderPage title="Bills of Materials" />} />
-            <Route path="/boms/new" element={<PlaceholderPage title="Create BOM" />} />
-            <Route path="/boms/:id" element={<PlaceholderPage title="BOM Detail" />} />
+            <Route path="/boms" element={<BOMListPage />} />
+            <Route element={<ProtectedRoute permission="bom:write" />}>
+              <Route path="/boms/new" element={<BOMFormPage />} />
+            </Route>
+            <Route path="/boms/:id" element={<BOMFormPage />} />
           </Route>
 
           {/* Inventory */}
