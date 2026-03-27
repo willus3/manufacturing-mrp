@@ -17,6 +17,10 @@ import LocationListPage from '@/pages/locations/LocationListPage';
 import LocationFormPage from '@/pages/locations/LocationFormPage';
 import BOMListPage from '@/pages/boms/BOMListPage';
 import BOMFormPage from '@/pages/boms/BOMFormPage';
+import StockOverviewPage from '@/pages/inventory/StockOverviewPage';
+import TransactionLogPage from '@/pages/inventory/TransactionLogPage';
+import AdjustmentPage from '@/pages/inventory/AdjustmentPage';
+import TransferPage from '@/pages/inventory/TransferPage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -64,10 +68,12 @@ const App = () => {
 
           {/* Inventory */}
           <Route element={<ProtectedRoute permission="inventory:read" />}>
-            <Route path="/inventory" element={<PlaceholderPage title="Inventory" />} />
-            <Route path="/inventory/transactions" element={<PlaceholderPage title="Transaction Log" />} />
-            <Route path="/inventory/adjust" element={<PlaceholderPage title="Inventory Adjustment" />} />
-            <Route path="/inventory/transfer" element={<PlaceholderPage title="Inventory Transfer" />} />
+            <Route path="/inventory" element={<StockOverviewPage />} />
+            <Route path="/inventory/transactions" element={<TransactionLogPage />} />
+            <Route element={<ProtectedRoute permission="inventory:write" />}>
+              <Route path="/inventory/adjust" element={<AdjustmentPage />} />
+              <Route path="/inventory/transfer" element={<TransferPage />} />
+            </Route>
             <Route path="/inventory/locations" element={<LocationListPage />} />
             <Route element={<ProtectedRoute permission="inventory:write" />}>
               <Route path="/inventory/locations/new" element={<LocationFormPage />} />
