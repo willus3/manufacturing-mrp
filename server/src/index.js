@@ -5,6 +5,9 @@ const { prisma, connectDb, disconnectDb } = require('./db');
 const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./auth/auth.routes');
 const itemsRoutes = require('./items/items.routes');
+const suppliersRoutes = require('./suppliers/suppliers.routes');
+const locationsRoutes = require('./locations/locations.routes');
+const itemSuppliersRoutes = require('./item-suppliers/item-suppliers.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +32,9 @@ app.get('/api/v1/health', async (req, res) => {
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/items', itemsRoutes);
+app.use('/api/v1/items/:itemId/suppliers', itemSuppliersRoutes);
+app.use('/api/v1/suppliers', suppliersRoutes);
+app.use('/api/v1/locations', locationsRoutes);
 
 // 404 handler
 app.use((req, res) => {

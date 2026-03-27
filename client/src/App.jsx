@@ -11,6 +11,10 @@ import DashboardPage from '@/pages/DashboardPage';
 import PlaceholderPage from '@/pages/PlaceholderPage';
 import ItemListPage from '@/pages/items/ItemListPage';
 import ItemFormPage from '@/pages/items/ItemFormPage';
+import SupplierListPage from '@/pages/suppliers/SupplierListPage';
+import SupplierFormPage from '@/pages/suppliers/SupplierFormPage';
+import LocationListPage from '@/pages/locations/LocationListPage';
+import LocationFormPage from '@/pages/locations/LocationFormPage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -60,14 +64,20 @@ const App = () => {
             <Route path="/inventory/transactions" element={<PlaceholderPage title="Transaction Log" />} />
             <Route path="/inventory/adjust" element={<PlaceholderPage title="Inventory Adjustment" />} />
             <Route path="/inventory/transfer" element={<PlaceholderPage title="Inventory Transfer" />} />
-            <Route path="/inventory/locations" element={<PlaceholderPage title="Locations" />} />
+            <Route path="/inventory/locations" element={<LocationListPage />} />
+            <Route element={<ProtectedRoute permission="inventory:write" />}>
+              <Route path="/inventory/locations/new" element={<LocationFormPage />} />
+            </Route>
+            <Route path="/inventory/locations/:id" element={<LocationFormPage />} />
           </Route>
 
           {/* Suppliers */}
           <Route element={<ProtectedRoute permission="supplier:read" />}>
-            <Route path="/suppliers" element={<PlaceholderPage title="Suppliers" />} />
-            <Route path="/suppliers/new" element={<PlaceholderPage title="Create Supplier" />} />
-            <Route path="/suppliers/:id" element={<PlaceholderPage title="Supplier Detail" />} />
+            <Route path="/suppliers" element={<SupplierListPage />} />
+            <Route element={<ProtectedRoute permission="supplier:write" />}>
+              <Route path="/suppliers/new" element={<SupplierFormPage />} />
+            </Route>
+            <Route path="/suppliers/:id" element={<SupplierFormPage />} />
           </Route>
 
           {/* Purchase Orders */}
