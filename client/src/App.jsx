@@ -9,6 +9,8 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import PlaceholderPage from '@/pages/PlaceholderPage';
+import ItemListPage from '@/pages/items/ItemListPage';
+import ItemFormPage from '@/pages/items/ItemFormPage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -38,9 +40,11 @@ const App = () => {
 
           {/* Items */}
           <Route element={<ProtectedRoute permission="item:read" />}>
-            <Route path="/items" element={<PlaceholderPage title="Items" />} />
-            <Route path="/items/new" element={<PlaceholderPage title="Create Item" />} />
-            <Route path="/items/:id" element={<PlaceholderPage title="Item Detail" />} />
+            <Route path="/items" element={<ItemListPage />} />
+            <Route element={<ProtectedRoute permission="item:write" />}>
+              <Route path="/items/new" element={<ItemFormPage />} />
+            </Route>
+            <Route path="/items/:id" element={<ItemFormPage />} />
           </Route>
 
           {/* BOMs */}
