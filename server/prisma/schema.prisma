@@ -1,0 +1,560 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// FOUNDATION: Tenant, User, Role, Permission
+// ============================================
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  status    TenantStatus @default(trial)
+  plan      TenantPlan   @default(starter)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users              User[]
+  roles              Role[]
+  items              Item[]
+  suppliers          Supplier[]
+  inventoryLocations InventoryLocation[]
+  inventoryStocks    InventoryStock[]
+  inventoryTransactions InventoryTransaction[]
+  boms               Bom[]
+  purchaseOrders     PurchaseOrder[]
+  workOrders         WorkOrder[]
+  demandEntries      DemandEntry[]
+  mrpRuns            MrpRun[]
+}
+
+enum TenantStatus {
+  active
+  suspended
+  trial
+}
+
+enum TenantPlan {
+  starter
+  professional
+  enterprise
+}
+
+model User {
+  id           String    @id @default(uuid())
+  tenantId     String?
+  email        String
+  passwordHash String
+  firstName    String
+  lastName     String
+  isActive     Boolean   @default(true)
+  isSuperAdmin Boolean   @default(false)
+  refreshTokenHash String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  tenant       Tenant?    @relation(fields: [tenantId], references: [id])
+  userRoles    UserRole[]
+  inventoryTransactions InventoryTransaction[]
+  purchaseOrders PurchaseOrder[]
+  purchaseOrderReceipts PurchaseOrderReceipt[]
+  workOrders   WorkOrder[]
+  demandEntries DemandEntry[]
+  mrpRuns      MrpRun[]
+
+  @@unique([tenantId, email])
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relations
+  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@unique([tenantId, name])
+}
+
+model Permission {
+  id          String @id @default(uuid())
+  code        String @unique
+  description String
+
+  // Relations
+  rolePermissions RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+// ============================================
+// MASTER DATA: Item, Supplier, ItemSupplier, Location
+// ============================================
+
+model Item {
+  id              String         @id @default(uuid())
+  tenantId        String
+  partNumber      String
+  description     String
+  type            ItemType
+  trackingMethod  TrackingMethod @default(none)
+  unitOfMeasure   String
+  reorderPoint    Decimal?
+  reorderQuantity Decimal?
+  leadTimeDays    Int?
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  tenant           Tenant              @relation(fields: [tenantId], references: [id])
+  itemSuppliers    ItemSupplier[]
+  inventoryStocks  InventoryStock[]
+  inventoryTransactions InventoryTransaction[]
+  bomHeaders       Bom[]               // BOMs that produce this item
+  bomLines         BomLine[]           // BOM lines where this item is a component
+  purchaseOrderLines PurchaseOrderLine[]
+  workOrderLines   WorkOrderLine[]
+  demandEntries    DemandEntry[]
+  mrpResults       MrpResult[]
+
+  @@unique([tenantId, partNumber])
+}
+
+enum ItemType {
+  raw_material
+  purchased_component
+  sub_assembly
+  finished_good
+  consumable
+}
+
+enum TrackingMethod {
+  none
+  lot
+  serial
+}
+
+model Supplier {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  code         String?
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  address      String?
+  notes        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  tenant         Tenant           @relation(fields: [tenantId], references: [id])
+  itemSuppliers  ItemSupplier[]
+  purchaseOrders PurchaseOrder[]
+  mrpResults     MrpResult[]
+
+  @@unique([tenantId, code])
+}
+
+model ItemSupplier {
+  id                 String   @id @default(uuid())
+  itemId             String
+  supplierId         String
+  supplierPartNumber String?
+  unitCost           Decimal?
+  leadTimeDays       Int?
+  isPreferred        Boolean  @default(false)
+  minOrderQuantity   Decimal?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  item     Item     @relation(fields: [itemId], references: [id])
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@unique([itemId, supplierId])
+}
+
+model InventoryLocation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  code        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  tenant              Tenant               @relation(fields: [tenantId], references: [id])
+  inventoryStocks     InventoryStock[]
+  inventoryTransactions InventoryTransaction[]
+  purchaseOrderReceipts PurchaseOrderReceipt[]
+  workOrderLines      WorkOrderLine[]
+
+  @@unique([tenantId, code])
+}
+
+// ============================================
+// INVENTORY: Stock, Transactions
+// ============================================
+
+model InventoryStock {
+  id              String          @id @default(uuid())
+  tenantId        String
+  itemId          String
+  locationId      String
+  lotNumber       String?
+  serialNumber    String?
+  inventoryStatus InventoryStatus @default(available)
+  quantityOnHand  Decimal         @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  tenant   Tenant            @relation(fields: [tenantId], references: [id])
+  item     Item              @relation(fields: [itemId], references: [id])
+  location InventoryLocation @relation(fields: [locationId], references: [id])
+
+  @@unique([tenantId, itemId, locationId, lotNumber, serialNumber, inventoryStatus])
+}
+
+enum InventoryStatus {
+  available
+  allocated
+  issued
+  in_transit
+  quarantine
+}
+
+model InventoryTransaction {
+  id              String          @id @default(uuid())
+  tenantId        String
+  itemId          String
+  locationId      String
+  lotNumber       String?
+  serialNumber    String?
+  transactionType TransactionType
+  quantity        Decimal
+  referenceType   ReferenceType?
+  referenceId     String?
+  notes           String?
+  performedBy     String
+  performedAt     DateTime
+  createdAt       DateTime        @default(now())
+
+  // Relations
+  tenant   Tenant            @relation(fields: [tenantId], references: [id])
+  item     Item              @relation(fields: [itemId], references: [id])
+  location InventoryLocation @relation(fields: [locationId], references: [id])
+  user     User              @relation(fields: [performedBy], references: [id])
+}
+
+enum TransactionType {
+  receipt
+  issue
+  adjustment
+  transfer
+  scrap
+}
+
+enum ReferenceType {
+  purchase_order
+  work_order
+  manual
+}
+
+// ============================================
+// BOM: Bill of Materials
+// ============================================
+
+model Bom {
+  id            String    @id @default(uuid())
+  tenantId      String
+  itemId        String
+  revision      String
+  status        BomStatus @default(draft)
+  effectiveDate DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  tenant     Tenant      @relation(fields: [tenantId], references: [id])
+  item       Item        @relation(fields: [itemId], references: [id])
+  bomLines   BomLine[]
+  workOrders WorkOrder[]
+}
+
+enum BomStatus {
+  draft
+  active
+  obsolete
+}
+
+model BomLine {
+  id            String  @id @default(uuid())
+  bomId         String
+  itemId        String
+  quantity      Decimal
+  unitOfMeasure String
+  position      Int?
+  scrapFactor   Decimal @default(0)
+  notes         String?
+
+  // Relations
+  bom  Bom  @relation(fields: [bomId], references: [id])
+  item Item @relation(fields: [itemId], references: [id])
+}
+
+// ============================================
+// PURCHASE ORDERS
+// ============================================
+
+model PurchaseOrder {
+  id           String   @id @default(uuid())
+  tenantId     String
+  poNumber     String
+  supplierId   String
+  status       PoStatus @default(draft)
+  orderDate    DateTime?
+  expectedDate DateTime?
+  notes        String?
+  createdBy    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  tenant   Tenant              @relation(fields: [tenantId], references: [id])
+  supplier Supplier            @relation(fields: [supplierId], references: [id])
+  creator  User                @relation(fields: [createdBy], references: [id])
+  lines    PurchaseOrderLine[]
+
+  @@unique([tenantId, poNumber])
+}
+
+enum PoStatus {
+  draft
+  sent
+  partial
+  received
+  cancelled
+}
+
+model PurchaseOrderLine {
+  id               String   @id @default(uuid())
+  purchaseOrderId  String
+  itemId           String
+  quantityOrdered  Decimal
+  quantityReceived Decimal  @default(0)
+  unitCost         Decimal?
+  dueDate          DateTime?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  purchaseOrder PurchaseOrder        @relation(fields: [purchaseOrderId], references: [id])
+  item          Item                 @relation(fields: [itemId], references: [id])
+  receipts      PurchaseOrderReceipt[]
+}
+
+model PurchaseOrderReceipt {
+  id               String   @id @default(uuid())
+  tenantId         String
+  poLineId         String
+  quantityReceived Decimal
+  locationId       String
+  lotNumber        String?
+  serialNumber     String?
+  receivedBy       String
+  receivedAt       DateTime
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  // Relations
+  poLine   PurchaseOrderLine @relation(fields: [poLineId], references: [id])
+  location InventoryLocation @relation(fields: [locationId], references: [id])
+  user     User              @relation(fields: [receivedBy], references: [id])
+}
+
+// ============================================
+// WORK ORDERS
+// ============================================
+
+model WorkOrder {
+  id             String        @id @default(uuid())
+  tenantId       String
+  woNumber       String
+  bomId          String
+  quantity       Decimal
+  status         WoStatus      @default(planned)
+  priority       Int           @default(0)
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  actualStart    DateTime?
+  actualEnd      DateTime?
+  notes          String?
+  createdBy      String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  tenant  Tenant          @relation(fields: [tenantId], references: [id])
+  bom     Bom             @relation(fields: [bomId], references: [id])
+  creator User            @relation(fields: [createdBy], references: [id])
+  lines   WorkOrderLine[]
+
+  @@unique([tenantId, woNumber])
+}
+
+enum WoStatus {
+  planned
+  released
+  in_progress
+  completed
+  cancelled
+}
+
+model WorkOrderLine {
+  id               String  @id @default(uuid())
+  workOrderId      String
+  itemId           String
+  quantityRequired Decimal
+  quantityIssued   Decimal @default(0)
+  locationId       String?
+  lotNumber        String?
+  serialNumber     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  workOrder WorkOrder          @relation(fields: [workOrderId], references: [id])
+  item      Item               @relation(fields: [itemId], references: [id])
+  location  InventoryLocation? @relation(fields: [locationId], references: [id])
+}
+
+// ============================================
+// MRP: Demand, Runs, Results
+// ============================================
+
+model DemandEntry {
+  id               String       @id @default(uuid())
+  tenantId         String
+  itemId           String
+  quantityRequired Decimal
+  dateRequired     DateTime
+  source           DemandSource @default(manual)
+  status           DemandStatus @default(open)
+  notes            String?
+  createdBy        String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Relations
+  tenant  Tenant @relation(fields: [tenantId], references: [id])
+  item    Item   @relation(fields: [itemId], references: [id])
+  creator User   @relation(fields: [createdBy], references: [id])
+}
+
+enum DemandSource {
+  manual
+  sales_order
+}
+
+enum DemandStatus {
+  open
+  planned
+  fulfilled
+  cancelled
+}
+
+model MrpRun {
+  id          String       @id @default(uuid())
+  tenantId    String
+  status      MrpRunStatus
+  ranBy       String
+  ranAt       DateTime
+  completedAt DateTime?
+  parameters  Json?
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  tenant  Tenant      @relation(fields: [tenantId], references: [id])
+  user    User        @relation(fields: [ranBy], references: [id])
+  results MrpResult[]
+}
+
+enum MrpRunStatus {
+  running
+  completed
+  failed
+}
+
+model MrpResult {
+  id                String          @id @default(uuid())
+  mrpRunId          String
+  itemId            String
+  actionType        MrpActionType
+  quantityNeeded    Decimal
+  dateNeeded        DateTime
+  suggestedOrderDate DateTime
+  supplierId        String?
+  status            MrpResultStatus @default(suggested)
+  convertedToId     String?
+  convertedToType   ConvertedToType?
+  createdAt         DateTime        @default(now())
+
+  // Relations
+  mrpRun   MrpRun    @relation(fields: [mrpRunId], references: [id])
+  item     Item      @relation(fields: [itemId], references: [id])
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+}
+
+enum MrpActionType {
+  purchase
+  produce
+}
+
+enum MrpResultStatus {
+  suggested
+  converted
+  dismissed
+}
+
+enum ConvertedToType {
+  purchase_order
+  work_order
+}
