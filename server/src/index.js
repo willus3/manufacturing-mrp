@@ -4,6 +4,7 @@ const cors = require('cors');
 const { prisma, connectDb, disconnectDb } = require('./db');
 const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./auth/auth.routes');
+const itemsRoutes = require('./items/items.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,7 @@ app.get('/api/v1/health', async (req, res) => {
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/items', itemsRoutes);
 
 // 404 handler
 app.use((req, res) => {
