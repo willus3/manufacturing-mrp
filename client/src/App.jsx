@@ -21,6 +21,9 @@ import StockOverviewPage from '@/pages/inventory/StockOverviewPage';
 import TransactionLogPage from '@/pages/inventory/TransactionLogPage';
 import AdjustmentPage from '@/pages/inventory/AdjustmentPage';
 import TransferPage from '@/pages/inventory/TransferPage';
+import POListPage from '@/pages/purchase-orders/POListPage';
+import POFormPage from '@/pages/purchase-orders/POFormPage';
+import POReceivePage from '@/pages/purchase-orders/POReceivePage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -92,10 +95,14 @@ const App = () => {
 
           {/* Purchase Orders */}
           <Route element={<ProtectedRoute permission="po:read" />}>
-            <Route path="/purchase-orders" element={<PlaceholderPage title="Purchase Orders" />} />
-            <Route path="/purchase-orders/new" element={<PlaceholderPage title="Create PO" />} />
-            <Route path="/purchase-orders/:id" element={<PlaceholderPage title="PO Detail" />} />
-            <Route path="/purchase-orders/:id/receive" element={<PlaceholderPage title="Receive PO" />} />
+            <Route path="/purchase-orders" element={<POListPage />} />
+            <Route element={<ProtectedRoute permission="po:write" />}>
+              <Route path="/purchase-orders/new" element={<POFormPage />} />
+            </Route>
+            <Route path="/purchase-orders/:id" element={<POFormPage />} />
+            <Route element={<ProtectedRoute permission="po:receive" />}>
+              <Route path="/purchase-orders/:id/receive" element={<POReceivePage />} />
+            </Route>
           </Route>
 
           {/* Work Orders */}

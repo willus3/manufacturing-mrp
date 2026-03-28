@@ -68,15 +68,24 @@ const BOMListPage = () => {
   const [page, setPage] = useState(1);
   const [sorting, setSorting] = useState([{ id: 'createdAt', desc: true }]);
   const [statusFilter, setStatusFilter] = useState('');
+  const [itemFilter, setItemFilter] = useState('');
 
   const sort = sorting[0]?.id ?? 'createdAt';
   const order = sorting[0]?.desc ? 'desc' : 'asc';
 
+  // Load items for filter dropdown
+  const { data: itemsData } = useQuery({
+    queryKey: ['items', 'all'],
+    queryFn: () => api.get('/items?pageSize=100&sort=partNumber&order=asc'),
+  });
+  const items = itemsData?.data ?? [];
+
   const { data, isLoading } = useQuery({
-    queryKey: ['boms', { page, sort, order, status: statusFilter }],
+    queryKey: ['boms', { page, sort, order, status: statusFilter, itemId: itemFilter }],
     queryFn: async () => {
       const params = new URLSearchParams({ page, pageSize: 25, sort, order });
       if (statusFilter) params.set('status', statusFilter);
+      if (itemFilter) params.set('itemId', itemFilter);
       return api.get(`/boms?${params}`);
     },
     placeholderData: (prev) => prev,
@@ -87,6 +96,11 @@ const BOMListPage = () => {
 
   const handleStatusChange = useCallback((e) => {
     setStatusFilter(e.target.value);
+    setPage(1);
+  }, []);
+
+  const handleItemChange = useCallback((e) => {
+    setItemFilter(e.target.value);
     setPage(1);
   }, []);
 
@@ -114,6 +128,21 @@ const BOMListPage = () => {
           <option value="draft">Draft</option>
           <option value="active">Active</option>
           <option value="obsolete">Obsolete</option>
+        </select>
+
+        <select
+          value={itemFilter}
+          onChange={handleItemChange}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm text-foreground"
+        >
+          <option value="">All Items</option>
+          {items
+            .filter((i) => ['finished_good', 'sub_assembly'].includes(i.type))
+            .map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.partNumber} — {item.description}
+              </option>
+            ))}
         </select>
       </div>
 

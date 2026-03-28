@@ -83,12 +83,32 @@ const TRANSACTION_TYPES = ['receipt', 'issue', 'adjustment', 'transfer', 'scrap'
 const TransactionLogPage = () => {
   const [page, setPage] = useState(1);
   const [typeFilter, setTypeFilter] = useState('');
+  const [itemFilter, setItemFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
+  // Load items and locations for filter dropdowns
+  const { data: itemsData } = useQuery({
+    queryKey: ['items', 'all'],
+    queryFn: () => api.get('/items?pageSize=100&sort=partNumber&order=asc'),
+  });
+  const { data: locsData } = useQuery({
+    queryKey: ['locations', 'active'],
+    queryFn: () => api.get('/locations?isActive=true'),
+  });
+  const items = itemsData?.data ?? [];
+  const locations = locsData?.data ?? [];
 
   const { data, isLoading } = useQuery({
-    queryKey: ['inventory-transactions', { page, type: typeFilter }],
+    queryKey: ['inventory-transactions', { page, type: typeFilter, itemId: itemFilter, locationId: locationFilter, dateFrom, dateTo }],
     queryFn: () => {
       const params = new URLSearchParams({ page, pageSize: 25 });
       if (typeFilter) params.set('type', typeFilter);
+      if (itemFilter) params.set('itemId', itemFilter);
+      if (locationFilter) params.set('locationId', locationFilter);
+      if (dateFrom) params.set('dateFrom', dateFrom);
+      if (dateTo) params.set('dateTo', dateTo);
       return api.get(`/inventory/transactions?${params}`);
     },
     placeholderData: (prev) => prev,
@@ -97,10 +117,11 @@ const TransactionLogPage = () => {
   const transactions = data?.data ?? [];
   const meta = data?.meta ?? {};
 
-  const handleTypeChange = useCallback((e) => {
-    setTypeFilter(e.target.value);
-    setPage(1);
-  }, []);
+  const handleTypeChange = useCallback((e) => { setTypeFilter(e.target.value); setPage(1); }, []);
+  const handleItemChange = useCallback((e) => { setItemFilter(e.target.value); setPage(1); }, []);
+  const handleLocationChange = useCallback((e) => { setLocationFilter(e.target.value); setPage(1); }, []);
+  const handleDateFromChange = useCallback((e) => { setDateFrom(e.target.value); setPage(1); }, []);
+  const handleDateToChange = useCallback((e) => { setDateTo(e.target.value); setPage(1); }, []);
 
   return (
     <div className="space-y-6">
@@ -119,6 +140,48 @@ const TransactionLogPage = () => {
             </option>
           ))}
         </select>
+
+        <select
+          value={itemFilter}
+          onChange={handleItemChange}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm text-foreground"
+        >
+          <option value="">All Items</option>
+          {items.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.partNumber} — {item.description}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={locationFilter}
+          onChange={handleLocationChange}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm text-foreground"
+        >
+          <option value="">All Locations</option>
+          {locations.map((loc) => (
+            <option key={loc.id} value={loc.id}>
+              {loc.code} — {loc.name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={handleDateFromChange}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm text-foreground"
+          aria-label="Date from"
+        />
+        <span className="text-sm text-muted-foreground">to</span>
+        <input
+          type="date"
+          value={dateTo}
+          onChange={handleDateToChange}
+          className="h-9 rounded-md border border-input bg-transparent px-3 text-sm text-foreground"
+          aria-label="Date to"
+        />
       </div>
 
       <DataTable

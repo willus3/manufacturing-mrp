@@ -39,10 +39,28 @@ const list = async (tenantId, query) => {
   return { suppliers, meta };
 };
 
-/** Get a single supplier by ID within tenant scope. */
+/** Get a single supplier by ID — includes linked items and recent POs. */
 const getById = async (id, tenantId) => {
   const supplier = await prisma.supplier.findFirst({
     where: { id, tenantId },
+    include: {
+      itemSuppliers: {
+        include: {
+          item: { select: { id: true, partNumber: true, description: true, type: true } },
+        },
+      },
+      purchaseOrders: {
+        select: {
+          id: true,
+          poNumber: true,
+          status: true,
+          orderDate: true,
+          _count: { select: { lines: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      },
+    },
   });
 
   if (!supplier) {

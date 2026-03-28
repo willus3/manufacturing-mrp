@@ -48,11 +48,34 @@ const list = async (tenantId, query) => {
 };
 
 // ============================================
-// GET BY ID — single item (relations added in later phases)
+// GET BY ID — single item with related suppliers, inventory, BOMs
 // ============================================
 const getById = async (id, tenantId) => {
   const item = await prisma.item.findFirst({
     where: { id, tenantId },
+    include: {
+      itemSuppliers: {
+        include: {
+          supplier: { select: { id: true, name: true, code: true } },
+        },
+      },
+      inventoryStocks: {
+        where: { quantityOnHand: { gt: 0 } },
+        include: {
+          location: { select: { id: true, name: true, code: true } },
+        },
+      },
+      bomHeaders: {
+        select: {
+          id: true,
+          revision: true,
+          status: true,
+          createdAt: true,
+          _count: { select: { bomLines: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
   });
 
   if (!item) {

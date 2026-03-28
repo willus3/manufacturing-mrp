@@ -14,6 +14,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 const supplierFormSchema = z.object({
   name: z.string().min(1, 'Supplier name is required').max(200),
@@ -178,6 +179,87 @@ const SupplierFormPage = () => {
           )}
         </div>
       </form>
+
+      {/* Related data sections — only shown when viewing an existing supplier */}
+      {isEdit && existingSupplier?.data && (
+        <div className="space-y-8 border-t pt-8">
+          {/* Linked Items */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Linked Items ({existingSupplier.data.itemSuppliers?.length ?? 0})</h2>
+            {existingSupplier.data.itemSuppliers?.length > 0 ? (
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-3 py-2 text-left font-medium">Part Number</th>
+                      <th className="px-3 py-2 text-left font-medium">Description</th>
+                      <th className="px-3 py-2 text-left font-medium">Type</th>
+                      <th className="px-3 py-2 text-left font-medium">Unit Cost</th>
+                      <th className="px-3 py-2 text-left font-medium">Preferred</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {existingSupplier.data.itemSuppliers.map((is) => (
+                      <tr
+                        key={is.id}
+                        className="border-b last:border-0 cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/items/${is.item?.id}`)}
+                      >
+                        <td className="px-3 py-2 font-medium">{is.item?.partNumber}</td>
+                        <td className="px-3 py-2">{is.item?.description}</td>
+                        <td className="px-3 py-2">{is.item?.type?.replace('_', ' ')}</td>
+                        <td className="px-3 py-2">{is.unitCost ? `$${Number(is.unitCost).toFixed(2)}` : '—'}</td>
+                        <td className="px-3 py-2">{is.isPreferred ? 'Yes' : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No items linked to this supplier.</p>
+            )}
+          </div>
+
+          {/* Purchase Orders */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Recent Purchase Orders</h2>
+            {existingSupplier.data.purchaseOrders?.length > 0 ? (
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-3 py-2 text-left font-medium">PO Number</th>
+                      <th className="px-3 py-2 text-left font-medium">Status</th>
+                      <th className="px-3 py-2 text-left font-medium">Order Date</th>
+                      <th className="px-3 py-2 text-left font-medium">Lines</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {existingSupplier.data.purchaseOrders.map((po) => (
+                      <tr
+                        key={po.id}
+                        className="border-b last:border-0 cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/purchase-orders/${po.id}`)}
+                      >
+                        <td className="px-3 py-2 font-medium">{po.poNumber}</td>
+                        <td className="px-3 py-2">
+                          <Badge variant={po.status === 'received' ? 'default' : po.status === 'cancelled' ? 'destructive' : 'outline'}>
+                            {po.status.charAt(0).toUpperCase() + po.status.slice(1)}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2">{po.orderDate ? new Date(po.orderDate).toLocaleDateString() : '—'}</td>
+                        <td className="px-3 py-2">{po._count?.lines ?? 0}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No purchase orders for this supplier.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

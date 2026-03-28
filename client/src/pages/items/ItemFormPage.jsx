@@ -17,6 +17,7 @@ import PageHeader from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 // ============================================
 // Validation schema (mirrors server-side Zod)
@@ -272,6 +273,122 @@ const ItemFormPage = () => {
           )}
         </div>
       </form>
+
+      {/* Related data sections — only shown when viewing an existing item */}
+      {isEdit && existingItem?.data && (
+        <div className="space-y-8 border-t pt-8">
+          {/* Suppliers */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Suppliers ({existingItem.data.itemSuppliers?.length ?? 0})</h2>
+            {existingItem.data.itemSuppliers?.length > 0 ? (
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-3 py-2 text-left font-medium">Supplier</th>
+                      <th className="px-3 py-2 text-left font-medium">Code</th>
+                      <th className="px-3 py-2 text-left font-medium">Supplier Part #</th>
+                      <th className="px-3 py-2 text-left font-medium">Unit Cost</th>
+                      <th className="px-3 py-2 text-left font-medium">Lead Time</th>
+                      <th className="px-3 py-2 text-left font-medium">Preferred</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {existingItem.data.itemSuppliers.map((is) => (
+                      <tr
+                        key={is.id}
+                        className="border-b last:border-0 cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/suppliers/${is.supplier?.id}`)}
+                      >
+                        <td className="px-3 py-2">{is.supplier?.name}</td>
+                        <td className="px-3 py-2">{is.supplier?.code || '—'}</td>
+                        <td className="px-3 py-2">{is.supplierPartNumber || '—'}</td>
+                        <td className="px-3 py-2">{is.unitCost ? `$${Number(is.unitCost).toFixed(2)}` : '—'}</td>
+                        <td className="px-3 py-2">{is.leadTimeDays ? `${is.leadTimeDays} days` : '—'}</td>
+                        <td className="px-3 py-2">{is.isPreferred ? 'Yes' : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No suppliers linked to this item.</p>
+            )}
+          </div>
+
+          {/* Inventory Stock */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Inventory Stock</h2>
+            {existingItem.data.inventoryStocks?.length > 0 ? (
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-3 py-2 text-left font-medium">Location</th>
+                      <th className="px-3 py-2 text-left font-medium">Qty On Hand</th>
+                      <th className="px-3 py-2 text-left font-medium">Lot</th>
+                      <th className="px-3 py-2 text-left font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {existingItem.data.inventoryStocks.map((stock) => (
+                      <tr key={stock.id} className="border-b last:border-0">
+                        <td className="px-3 py-2">{stock.location?.code} — {stock.location?.name}</td>
+                        <td className="px-3 py-2">{Number(stock.quantityOnHand)}</td>
+                        <td className="px-3 py-2">{stock.lotNumber || '—'}</td>
+                        <td className="px-3 py-2">
+                          <Badge variant="outline">{stock.inventoryStatus?.replace('_', ' ')}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No inventory stock for this item.</p>
+            )}
+          </div>
+
+          {/* BOMs */}
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold">Bills of Materials</h2>
+            {existingItem.data.bomHeaders?.length > 0 ? (
+              <div className="rounded-md border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="px-3 py-2 text-left font-medium">Revision</th>
+                      <th className="px-3 py-2 text-left font-medium">Status</th>
+                      <th className="px-3 py-2 text-left font-medium">Lines</th>
+                      <th className="px-3 py-2 text-left font-medium">Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {existingItem.data.bomHeaders.map((bom) => (
+                      <tr
+                        key={bom.id}
+                        className="border-b last:border-0 cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate(`/boms/${bom.id}`)}
+                      >
+                        <td className="px-3 py-2 font-medium">{bom.revision}</td>
+                        <td className="px-3 py-2">
+                          <Badge variant={bom.status === 'active' ? 'default' : bom.status === 'draft' ? 'secondary' : 'outline'}>
+                            {bom.status.charAt(0).toUpperCase() + bom.status.slice(1)}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2">{bom._count?.bomLines ?? 0}</td>
+                        <td className="px-3 py-2">{new Date(bom.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No BOMs for this item.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

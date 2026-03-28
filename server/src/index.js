@@ -10,6 +10,8 @@ const locationsRoutes = require('./locations/locations.routes');
 const itemSuppliersRoutes = require('./item-suppliers/item-suppliers.routes');
 const bomsRoutes = require('./boms/boms.routes');
 const inventoryRoutes = require('./inventory/inventory.routes');
+const purchaseOrderRoutes = require('./purchase-orders/po.routes');
+const workOrderRoutes = require('./work-orders/wo.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +41,8 @@ app.use('/api/v1/suppliers', suppliersRoutes);
 app.use('/api/v1/locations', locationsRoutes);
 app.use('/api/v1/boms', bomsRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
+app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
+app.use('/api/v1/work-orders', workOrderRoutes);
 
 // 404 handler
 app.use((req, res) => {

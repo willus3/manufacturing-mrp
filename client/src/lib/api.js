@@ -136,3 +136,27 @@ api.post = (endpoint, body, options) => api(endpoint, { method: 'POST', body, ..
 api.put = (endpoint, body, options) => api(endpoint, { method: 'PUT', body, ...options });
 api.patch = (endpoint, body, options) => api(endpoint, { method: 'PATCH', body, ...options });
 api.delete = (endpoint, options) => api(endpoint, { method: 'DELETE', ...options });
+
+// File upload — sends FormData without Content-Type header (browser sets multipart boundary)
+api.upload = async (endpoint, formData) => {
+  const token = getAccessToken();
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(data.error?.message || 'Upload failed');
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+
+  return data;
+};
