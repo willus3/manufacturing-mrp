@@ -5,6 +5,9 @@ Features confirmed for future phases, in approximate priority order:
 | Feature | Notes |
 |---------|-------|
 | File Attachments | Polymorphic Attachment entity, cloud storage (S3/R2). Tabs on item, BOM, PO, WO detail pages. |
+| MRP Lead Time Cascading | Multi-level lead time offsetting through BOM tree — V1 offsets at single level only. Cascade parent assembly lead times so component order dates account for each BOM level (e.g., raw material PO date = demand date − assembly lead time − sub-assembly lead time − supplier lead time). |
+| MRP Bulk PO Conversion | When converting purchase suggestions, option to consolidate all items from the same supplier into a single PO instead of one PO per item. V1 creates one PO per suggestion. |
+| PO-to-WO Linking | Link purchase orders to work orders they supply materials for. Enables traceability from demand → WO → PO and helps coordinate timing between procurement and production. |
 | Demand Forecasting | Sales history analysis, trend-based planning |
 | Capacity Planning | Machine hours, labor hours, floor space constraints |
 | Shop Floor Tracking | Real-time job progress, operator input |

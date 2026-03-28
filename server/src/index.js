@@ -12,6 +12,7 @@ const bomsRoutes = require('./boms/boms.routes');
 const inventoryRoutes = require('./inventory/inventory.routes');
 const purchaseOrderRoutes = require('./purchase-orders/po.routes');
 const workOrderRoutes = require('./work-orders/wo.routes');
+const mrpRoutes = require('./mrp/mrp.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -43,6 +44,7 @@ app.use('/api/v1/boms', bomsRoutes);
 app.use('/api/v1/inventory', inventoryRoutes);
 app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 app.use('/api/v1/work-orders', workOrderRoutes);
+app.use('/api/v1/mrp', mrpRoutes);
 
 // 404 handler
 app.use((req, res) => {

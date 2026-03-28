@@ -26,6 +26,10 @@ import POFormPage from '@/pages/purchase-orders/POFormPage';
 import POReceivePage from '@/pages/purchase-orders/POReceivePage';
 import WOListPage from '@/pages/work-orders/WOListPage';
 import WOFormPage from '@/pages/work-orders/WOFormPage';
+import DemandListPage from '@/pages/mrp/DemandListPage';
+import DemandFormPage from '@/pages/mrp/DemandFormPage';
+import MRPRunPage from '@/pages/mrp/MRPRunPage';
+import MRPResultsPage from '@/pages/mrp/MRPResultsPage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -118,10 +122,11 @@ const App = () => {
 
           {/* MRP */}
           <Route element={<ProtectedRoute permission="mrp:run" />}>
-            <Route path="/mrp/demand" element={<PlaceholderPage title="Demand Entries" />} />
-            <Route path="/mrp/demand/new" element={<PlaceholderPage title="Create Demand" />} />
-            <Route path="/mrp/run" element={<PlaceholderPage title="Run MRP" />} />
-            <Route path="/mrp/results/:runId" element={<PlaceholderPage title="MRP Results" />} />
+            <Route path="/mrp/demand" element={<DemandListPage />} />
+            <Route path="/mrp/demand/new" element={<DemandFormPage />} />
+            <Route path="/mrp/demand/:id" element={<DemandFormPage />} />
+            <Route path="/mrp/run" element={<MRPRunPage />} />
+            <Route path="/mrp/results/:runId" element={<MRPResultsPage />} />
           </Route>
 
           {/* Admin */}
