@@ -24,6 +24,8 @@ import TransferPage from '@/pages/inventory/TransferPage';
 import POListPage from '@/pages/purchase-orders/POListPage';
 import POFormPage from '@/pages/purchase-orders/POFormPage';
 import POReceivePage from '@/pages/purchase-orders/POReceivePage';
+import WOListPage from '@/pages/work-orders/WOListPage';
+import WOFormPage from '@/pages/work-orders/WOFormPage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -107,9 +109,11 @@ const App = () => {
 
           {/* Work Orders */}
           <Route element={<ProtectedRoute permission="workorder:read" />}>
-            <Route path="/work-orders" element={<PlaceholderPage title="Work Orders" />} />
-            <Route path="/work-orders/new" element={<PlaceholderPage title="Create Work Order" />} />
-            <Route path="/work-orders/:id" element={<PlaceholderPage title="Work Order Detail" />} />
+            <Route path="/work-orders" element={<WOListPage />} />
+            <Route element={<ProtectedRoute permission="workorder:write" />}>
+              <Route path="/work-orders/new" element={<WOFormPage />} />
+            </Route>
+            <Route path="/work-orders/:id" element={<WOFormPage />} />
           </Route>
 
           {/* MRP */}
