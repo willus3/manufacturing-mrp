@@ -244,8 +244,8 @@ const runMrp = async (tenantId, userId, params) => {
       });
       const openWoQty = Number(woAgg._sum.quantity || 0);
 
-      // Net requirement
-      const netQty = grossQty - availableStock - openPoQty - openWoQty;
+      // Net requirement (rounded to avoid floating point noise)
+      const netQty = Math.round((grossQty - availableStock - openPoQty - openWoQty) * 100) / 100;
 
       if (netQty <= 0) continue; // Sufficient supply, no action needed
 
@@ -361,8 +361,8 @@ const explodeBom = async (tenantId, itemId, parentQty, dateNeeded, requirements,
   nextVisited.add(itemId);
 
   for (const line of bom.bomLines) {
-    // Component qty = BOM line qty × parent qty × (1 + scrapFactor)
-    const componentQty = Number(line.quantity) * parentQty * (1 + Number(line.scrapFactor || 0));
+    // Component qty = BOM line qty × parent qty × (1 + scrapFactor), rounded to avoid floating point noise
+    const componentQty = Math.round(Number(line.quantity) * parentQty * (1 + Number(line.scrapFactor || 0)) * 100) / 100;
 
     // Recurse into sub-components
     await explodeBom(tenantId, line.itemId, componentQty, dateNeeded, requirements, nextVisited);
