@@ -37,7 +37,7 @@ const columns = [
     enableSorting: false,
     cell: ({ row }) => {
       const loc = row.original.location;
-      return `${loc?.code} — ${loc?.name}`;
+      return loc ? `${loc.code} — ${loc.name}` : '—';
     },
   },
   {
@@ -60,8 +60,10 @@ const columns = [
     accessorKey: 'inventoryStatus',
     header: 'Status',
     enableSorting: false,
-    cell: ({ getValue }) => {
+    cell: ({ getValue, row }) => {
       const status = getValue();
+      const qty = Number(row.original.quantityOnHand);
+      if (qty === 0 && !row.original.location) return '—';
       return (
         <Badge variant={STATUS_VARIANTS[status] ?? 'outline'}>
           {status.replace('_', ' ')}

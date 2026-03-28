@@ -7,25 +7,70 @@ const STOCK_INCLUDE = {
   location: { select: { id: true, name: true, code: true } },
 };
 
-/** List inventory stock — paginated, filterable. */
+/**
+ * List inventory stock — paginated, filterable.
+ * Shows ALL active items, including those with zero or no stock.
+ * When filtered by location or status, only matching stock rows appear,
+ * but items with no matching stock still show with qty 0.
+ */
 const listStock = async (tenantId, query) => {
   const { itemId, locationId, status, page, pageSize } = query;
 
-  const where = { tenantId, quantityOnHand: { gt: 0 } };
-  if (itemId) where.itemId = itemId;
-  if (locationId) where.locationId = locationId;
-  if (status) where.inventoryStatus = status;
+  // Build item filter — always active items in this tenant
+  const itemWhere = { tenantId, isActive: true };
+  if (itemId) itemWhere.id = itemId;
 
-  const [total, stock] = await Promise.all([
-    prisma.inventoryStock.count({ where }),
-    prisma.inventoryStock.findMany({
-      where,
-      include: STOCK_INCLUDE,
-      orderBy: [{ item: { partNumber: 'asc' } }, { location: { name: 'asc' } }],
+  // Build stock filter for the nested include
+  const stockWhere = {};
+  if (locationId) stockWhere.locationId = locationId;
+  if (status) stockWhere.inventoryStatus = status;
+
+  const [total, items] = await Promise.all([
+    prisma.item.count({ where: itemWhere }),
+    prisma.item.findMany({
+      where: itemWhere,
+      select: {
+        id: true,
+        partNumber: true,
+        description: true,
+        unitOfMeasure: true,
+        inventoryStocks: {
+          where: stockWhere,
+          include: {
+            location: { select: { id: true, name: true, code: true } },
+          },
+        },
+      },
+      orderBy: { partNumber: 'asc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
   ]);
+
+  // Flatten: one row per item/location/lot/status combo.
+  // Items with no stock get a single row with qty 0.
+  const stock = items.flatMap((item) => {
+    if (item.inventoryStocks.length === 0) {
+      return [{
+        id: `no-stock-${item.id}`,
+        item: { id: item.id, partNumber: item.partNumber, description: item.description, unitOfMeasure: item.unitOfMeasure },
+        location: null,
+        quantityOnHand: 0,
+        lotNumber: null,
+        serialNumber: null,
+        inventoryStatus: 'available',
+      }];
+    }
+    return item.inventoryStocks.map((s) => ({
+      id: s.id,
+      item: { id: item.id, partNumber: item.partNumber, description: item.description, unitOfMeasure: item.unitOfMeasure },
+      location: s.location,
+      quantityOnHand: s.quantityOnHand,
+      lotNumber: s.lotNumber,
+      serialNumber: s.serialNumber,
+      inventoryStatus: s.inventoryStatus,
+    }));
+  });
 
   return {
     stock,
