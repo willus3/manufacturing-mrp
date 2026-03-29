@@ -8,7 +8,6 @@ import AppShell from '@/components/layout/AppShell';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
-import PlaceholderPage from '@/pages/PlaceholderPage';
 import ItemListPage from '@/pages/items/ItemListPage';
 import ItemFormPage from '@/pages/items/ItemFormPage';
 import SupplierListPage from '@/pages/suppliers/SupplierListPage';
@@ -30,6 +29,9 @@ import DemandListPage from '@/pages/mrp/DemandListPage';
 import DemandFormPage from '@/pages/mrp/DemandFormPage';
 import MRPRunPage from '@/pages/mrp/MRPRunPage';
 import MRPResultsPage from '@/pages/mrp/MRPResultsPage';
+import UserListPage from '@/pages/admin/UserListPage';
+import UserFormPage from '@/pages/admin/UserFormPage';
+import RoleListPage from '@/pages/admin/RoleListPage';
 
 const App = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -131,14 +133,10 @@ const App = () => {
 
           {/* Admin */}
           <Route element={<ProtectedRoute permission="users:manage" />}>
-            <Route path="/admin/users" element={<PlaceholderPage title="User Management" />} />
-            <Route path="/admin/users/new" element={<PlaceholderPage title="Create User" />} />
-            <Route path="/admin/users/:id" element={<PlaceholderPage title="User Detail" />} />
-            <Route path="/admin/roles" element={<PlaceholderPage title="Role Management" />} />
-          </Route>
-
-          <Route element={<ProtectedRoute permission="settings:manage" />}>
-            <Route path="/admin/settings" element={<PlaceholderPage title="Tenant Settings" />} />
+            <Route path="/admin/users" element={<UserListPage />} />
+            <Route path="/admin/users/new" element={<UserFormPage />} />
+            <Route path="/admin/users/:id" element={<UserFormPage />} />
+            <Route path="/admin/roles" element={<RoleListPage />} />
           </Route>
 
           {/* Catch-all — redirect to dashboard */}

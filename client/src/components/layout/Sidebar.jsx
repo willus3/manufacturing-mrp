@@ -16,7 +16,7 @@ import {
   HardHat,
   Calculator,
   Users,
-  Settings,
+  Shield,
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react';
@@ -36,7 +36,7 @@ const NAV_ITEMS = [
 
 const ADMIN_ITEMS = [
   { to: '/admin/users', label: 'Users', icon: Users, permission: 'users:manage' },
-  { to: '/admin/settings', label: 'Settings', icon: Settings, permission: 'settings:manage' },
+  { to: '/admin/roles', label: 'Roles', icon: Shield, permission: 'users:manage' },
 ];
 
 const NavItem = ({ to, label, icon: Icon, collapsed }) => (
