@@ -217,4 +217,4 @@ const getMe = async (userId) => {
   };
 };
 
-module.exports = { login, refresh, logout, getMe };
+module.exports = { login, refresh, logout, getMe, loadUserPermissions };
