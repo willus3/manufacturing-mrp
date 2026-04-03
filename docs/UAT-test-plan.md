@@ -32,19 +32,19 @@ Work through each section in order. Check the box when a test passes. If a test 
 
 | # | Test | Steps | Expected Result | Pass | Notes |
 |---|------|-------|-----------------|------|-------|
-| 1.1.1 | Successful login | Go to `localhost:5173`. Enter `admin@test.com`, `password123`, tenant slug `test-shop`. Click Login. | Redirected to Dashboard. Welcome message shows "Welcome back, Admin." | [ ] | |
-| 1.1.2 | Wrong password | Enter correct email and slug but wrong password. Click Login. | Error message displayed: "Invalid credentials" or similar. Stay on login page. | [ ] | |
-| 1.1.3 | Wrong tenant slug | Enter correct email and password but wrong slug (e.g., `fake-shop`). Click Login. | Error message. Stay on login page. | [ ] | |
-| 1.1.4 | Empty fields | Leave all fields blank. Click Login. | Form validation prevents submission or shows error. | [ ] | |
-| 1.1.5 | Redirect after login | While logged out, navigate directly to `localhost:5173/items`. Login. | After login, redirected to `/items` (not dashboard). | [ ] | |
+| 1.1.1 | Successful login | Go to `localhost:5173`. Enter `admin@test.com`, `password123`, tenant slug `test-shop`. Click Login. | Redirected to Dashboard. Welcome message shows "Welcome back, Admin." | [Yes ] | clicking test admin at top right does not log you out and take you to login screen, it takes you to a blank screen.|
+| 1.1.2 | Wrong password | Enter correct email and slug but wrong password. Click Login. | Error message displayed: "Invalid credentials" or similar. Stay on login page. | [Pass] | |
+| 1.1.3 | Wrong tenant slug | Enter correct email and password but wrong slug (e.g., `fake-shop`). Click Login. | Error message. Stay on login page. | [Pass] | |
+| 1.1.4 | Empty fields | Leave all fields blank. Click Login. | Form validation prevents submission or shows error. | [Pass] | |
+| 1.1.5 | Redirect after login | While logged out, navigate directly to `localhost:5173/items`. Login. | After login, redirected to `/items` (not dashboard). | [Fail ] | While logged out /items does not take you to items it stays on the login screen which seems correct if you aren't logged in?|
 
 ### 1.2 Session & Logout
 
 | # | Test | Steps | Expected Result | Pass | Notes |
 |---|------|-------|-----------------|------|-------|
-| 1.2.1 | Logout | Click user menu in top bar. Click Logout. | Redirected to login page. Attempting to navigate to `/items` redirects back to login. | [ ] | |
-| 1.2.2 | Session persistence | Login. Close the browser tab. Open `localhost:5173` again. | Still logged in — dashboard loads without re-entering credentials. | [ ] | |
-| 1.2.3 | Protected route guard | While logged out, navigate to `localhost:5173/items`. | Redirected to login page. | [ ] | |
+| 1.2.1 | Logout | Click user menu in top bar. Click Logout. | Redirected to login page. Attempting to navigate to `/items` redirects back to login. | [PAss ] | |
+| 1.2.2 | Session persistence | Login. Close the browser tab. Open `localhost:5173` again. | Still logged in — dashboard loads without re-entering credentials. | [Pass ] | |
+| 1.2.3 | Protected route guard | While logged out, navigate to `localhost:5173/items`. | Redirected to login page. | [ Pass] | |
 
 ---
 
@@ -54,7 +54,7 @@ Work through each section in order. Check the box when a test passes. If a test 
 
 | # | Test | Steps | Expected Result | Pass | Notes |
 |---|------|-------|-----------------|------|-------|
-| 2.1 | Dashboard loads | Navigate to `/` (click Dashboard in sidebar). | Page loads with 4 cards: Low Stock Alerts, Purchase Orders, Work Orders, MRP & Demand. No errors. | [ ] | |
+| 2.1 | Dashboard loads | Navigate to `/` (click Dashboard in sidebar). | Page loads with 4 cards: Low Stock Alerts, Purchase Orders, Work Orders, MRP & Demand. No errors. | [ Pass] | |
 | 2.2 | Low Stock Alerts — empty | With no reorder points configured, check the Low Stock card. | Shows "0" and "All items above reorder point." | [ ] | |
 | 2.3 | Low Stock Alerts — trigger | Go to Items. Edit an item. Set reorder point to a number higher than current stock (e.g., 9999). Save. Return to Dashboard. | Low Stock Alerts card shows count >= 1. The item's part number appears with current qty vs. reorder point. | [ ] | |
 | 2.4 | Low Stock Alerts — clear | Go back to the item. Remove the reorder point (clear the field) or set it to 0. Save. Return to Dashboard. | Low Stock Alerts count goes back down. | [ ] | |
