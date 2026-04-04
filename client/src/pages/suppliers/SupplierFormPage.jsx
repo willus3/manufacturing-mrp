@@ -26,9 +26,9 @@ const supplierFormSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-const FormField = ({ label, error, children }) => (
+const FormField = ({ label, htmlFor, error, children }) => (
   <div className="space-y-1.5">
-    <Label className={error ? 'text-destructive' : ''}>{label}</Label>
+    <Label htmlFor={htmlFor} className={error ? 'text-destructive' : ''}>{label}</Label>
     {children}
     {error && <p className="text-sm text-destructive">{error}</p>}
   </div>
@@ -131,32 +131,32 @@ const SupplierFormPage = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Supplier Name" error={errors.name?.message}>
-            <Input {...register('name')} placeholder="e.g., Acme Steel" />
+          <FormField label="Supplier Name" htmlFor="name" error={errors.name?.message}>
+            <Input id="name" {...register('name')} placeholder="e.g., Acme Steel" />
           </FormField>
-          <FormField label="Code" error={errors.code?.message}>
-            <Input {...register('code')} placeholder="e.g., ACME (optional)" />
+          <FormField label="Code" htmlFor="code" error={errors.code?.message}>
+            <Input id="code" {...register('code')} placeholder="e.g., ACME (optional)" />
           </FormField>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <FormField label="Contact Name" error={errors.contactName?.message}>
-            <Input {...register('contactName')} placeholder="Name" />
+          <FormField label="Contact Name" htmlFor="contactName" error={errors.contactName?.message}>
+            <Input id="contactName" {...register('contactName')} placeholder="Name" />
           </FormField>
-          <FormField label="Contact Email" error={errors.contactEmail?.message}>
-            <Input {...register('contactEmail')} type="email" placeholder="email@example.com" />
+          <FormField label="Contact Email" htmlFor="contactEmail" error={errors.contactEmail?.message}>
+            <Input id="contactEmail" {...register('contactEmail')} type="email" placeholder="email@example.com" />
           </FormField>
-          <FormField label="Contact Phone" error={errors.contactPhone?.message}>
-            <Input {...register('contactPhone')} placeholder="555-1234" />
+          <FormField label="Contact Phone" htmlFor="contactPhone" error={errors.contactPhone?.message}>
+            <Input id="contactPhone" {...register('contactPhone')} placeholder="555-1234" />
           </FormField>
         </div>
 
-        <FormField label="Address" error={errors.address?.message}>
-          <Input {...register('address')} placeholder="Street, City, State, ZIP" />
+        <FormField label="Address" htmlFor="address" error={errors.address?.message}>
+          <Input id="address" {...register('address')} placeholder="Street, City, State, ZIP" />
         </FormField>
 
-        <FormField label="Notes" error={errors.notes?.message}>
-          <Input {...register('notes')} placeholder="Internal notes about this supplier" />
+        <FormField label="Notes" htmlFor="notes" error={errors.notes?.message}>
+          <Input id="notes" {...register('notes')} placeholder="Internal notes about this supplier" />
         </FormField>
 
         <div className="flex items-center gap-3">

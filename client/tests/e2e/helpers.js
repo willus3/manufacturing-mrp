@@ -20,10 +20,11 @@ export const SUPER_ADMIN = {
  */
 export async function login(page, { email, password, tenantSlug } = ADMIN) {
   await page.goto('/login');
+  // Fill in order: Workspace (tenant slug), Email, Password
+  await page.getByLabel(/workspace/i).fill(tenantSlug);
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
-  await page.getByLabel(/tenant|slug|company/i).fill(tenantSlug);
-  await page.getByRole('button', { name: /login|sign in/i }).click();
+  await page.getByRole('button', { name: /sign in/i }).click();
   // Wait for navigation away from login page
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 10_000 });
 }
@@ -32,12 +33,10 @@ export async function login(page, { email, password, tenantSlug } = ADMIN) {
  * Logout via the top bar user menu.
  */
 export async function logout(page) {
-  // Click the user menu button in the top bar
-  await page.locator('header button, header [aria-haspopup]').last().click();
-  // Click sign out
-  await page.getByRole('menuitem', { name: /sign out/i }).or(
-    page.getByText(/sign out/i)
-  ).click();
+  // Click the user menu button in the top bar (has aria-haspopup)
+  await page.locator('header button[aria-haspopup]').click();
+  // Click sign out (button with role="menuitem")
+  await page.getByRole('menuitem', { name: /sign out/i }).click();
   // Wait for login page
   await page.waitForURL(/\/login/);
 }

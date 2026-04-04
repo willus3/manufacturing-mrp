@@ -3,7 +3,15 @@
     "allow": [
       "Bash(node -e \"process.stdin.resume\\(\\);let d='''''''';process.stdin.on\\(''''data'''',c=>d+=c\\);process.stdin.on\\(''''end'''',\\(\\)=>{const p=JSON.parse\\(d\\);console.log\\(''''base-ui version:'''',p.version\\)}\\)\")",
       "Bash(npm install:*)",
-      "Bash(npx playwright:*)"
+      "Bash(npx playwright:*)",
+      "Bash(curl -s http://localhost:3000/api/v1/health)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJiOTYyZGE0Ny1hZjEwLTQ4OTMtYTc2Ny1mOThkNTQ5YTM2MWQiLCJ0ZW5hbnRJZCI6ImZmNTE4NzUxLTFlMzQtNGJmOS04NjMyLTNiZGZhYjMxMDExMiIsInBlcm1pc3Npb25zIjpbImJvbTpyZWFkIiwiYm9tOndyaXRlIiwiYm9tOmRlbGV0ZSIsImludmVudG9yeTpyZWFkIiwiaW52ZW50b3J5OndyaXRlIiwiaXRlbTpyZWFkIiwiaXRlbTp3cml0ZSIsInBvOnJlYWQiLCJwbzp3cml0ZSIsInBvOnJlY2VpdmUiLCJzdXBwbGllcjpyZWFkIiwic3VwcGxpZXI6d3JpdGUiLCJ3b3Jrb3JkZXI6cmVhZCIsIndvcmtvcmRlcjp3cml0ZSIsIndvcmtvcmRlcjpzdGF0dXMiLCJtcnA6cnVuIiwidXNlcnM6bWFuYWdlIiwic2V0dGluZ3M6bWFuYWdlIl0sImlzU3VwZXJBZG1pbiI6ZmFsc2UsImlhdCI6MTc3NTIzNjkyMCwiZXhwIjoxNzc1MjQwNTIwfQ.phEMduo6yPRhzHGfLwMmSE9qb7vCf9TMfQVI7iNVLMw\" curl -s http://localhost:3000/api/v1/dashboard -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d, indent=2\\)\\)\")",
+      "Bash(curl -s http://localhost:3000/api/v1/admin/users/nonexistent/reactivate -X PATCH -H \"Authorization: Bearer test\")",
+      "Bash(curl:*)",
+      "Bash(node -e \":*)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d[''''data''''][''''accessToken''''][:50]\\)\")"
     ]
   }
 }

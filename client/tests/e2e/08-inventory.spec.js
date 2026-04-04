@@ -69,8 +69,8 @@ test.describe.serial('8. Inventory Control', () => {
   test('8.2.3 - Verify stock', async ({ page }) => {
     await page.goto('/inventory');
     await page.waitForTimeout(1000);
-    // UAT-RAW-001 should show stock
-    await expect(page.getByText('UAT-RAW-001')).toBeVisible();
+    // UAT-RAW-001 should show stock — scope to table to avoid dropdown matches
+    await expect(page.getByRole('cell', { name: 'UAT-RAW-001' }).first()).toBeVisible();
   });
 
   test('8.2.4 - Add more stock (UAT-RAW-002: +50)', async ({ page }) => {

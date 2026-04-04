@@ -53,6 +53,16 @@ const deactivateUser = async (req, res, next) => {
   }
 };
 
+// PATCH /admin/users/:id/reactivate — re-enable a deactivated user
+const reactivateUser = async (req, res, next) => {
+  try {
+    const user = await adminService.reactivateUser(req.params.id, req.tenantId);
+    sendSuccess(res, user);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /admin/roles — all roles with permissions
 const listRoles = async (req, res, next) => {
   try {
@@ -99,6 +109,7 @@ module.exports = {
   createUser,
   updateUser,
   deactivateUser,
+  reactivateUser,
   listRoles,
   createRole,
   updateRole,

@@ -62,11 +62,7 @@ test.describe.serial('14. RBAC — Permission Enforcement', () => {
 
       // Re-activate Jane if deactivated
       if (!jane.isActive) {
-        // Re-activate by updating isActive (or recreate)
-        await page.request.put(`${API}/admin/users/${janeUserId}`, {
-          headers,
-          data: { isActive: true },
-        });
+        await page.request.patch(`${API}/admin/users/${janeUserId}/reactivate`, { headers });
       }
 
       // Ensure Jane has only Inventory Clerk role

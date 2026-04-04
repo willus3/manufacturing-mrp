@@ -18,10 +18,10 @@ test.describe.serial('1. Authentication', () => {
 
   test('1.1.2 - Wrong password', async ({ page }) => {
     await page.goto('/login');
+    await page.getByLabel(/workspace/i).fill(ADMIN.tenantSlug);
     await page.getByLabel(/email/i).fill(ADMIN.email);
     await page.getByLabel(/password/i).fill('wrongpassword');
-    await page.getByLabel(/tenant|slug|company/i).fill(ADMIN.tenantSlug);
-    await page.getByRole('button', { name: /login|sign in/i }).click();
+    await page.getByRole('button', { name: /sign in/i }).click();
     // Should stay on login page with error
     await expect(page).toHaveURL(/\/login/);
     await expect(page.getByText(/invalid|failed|incorrect/i)).toBeVisible();
@@ -29,10 +29,10 @@ test.describe.serial('1. Authentication', () => {
 
   test('1.1.3 - Wrong tenant slug', async ({ page }) => {
     await page.goto('/login');
+    await page.getByLabel(/workspace/i).fill('fake-shop');
     await page.getByLabel(/email/i).fill(ADMIN.email);
     await page.getByLabel(/password/i).fill(ADMIN.password);
-    await page.getByLabel(/tenant|slug|company/i).fill('fake-shop');
-    await page.getByRole('button', { name: /login|sign in/i }).click();
+    await page.getByRole('button', { name: /sign in/i }).click();
     // Should stay on login page with error
     await expect(page).toHaveURL(/\/login/);
     await expect(page.getByText(/invalid|failed|not found/i)).toBeVisible();

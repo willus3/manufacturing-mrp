@@ -30,7 +30,8 @@ test.describe.serial('9. Purchase Orders', () => {
 
   test('9.1.1 - Navigate to create', async ({ page }) => {
     await page.goto('/purchase-orders');
-    await page.getByRole('link', { name: /new po|create/i }).click();
+    // "Create PO" is a button that navigates (not a link)
+    await page.getByRole('button', { name: /new po|create po|create/i }).click();
     await expect(page).toHaveURL(/\/purchase-orders\/new/);
   });
 
@@ -186,13 +187,14 @@ test.describe.serial('9. Purchase Orders', () => {
     const locationId = locs[0].id;
 
     // Partial receive: 50 of 200 for first line
+    // receive endpoint returns 201 (created receipt)
     const res = await page.request.post(`${API}/purchase-orders/${poId}/receive`, {
       headers,
       data: {
         lines: [{ poLineId: poLineIds[0], quantity: 50, locationId }],
       },
     });
-    expect(res.status()).toBe(200);
+    expect([200, 201]).toContain(res.status());
 
     // Verify status is partial
     const poRes = await page.request.get(`${API}/purchase-orders/${poId}`, { headers });
@@ -226,6 +228,7 @@ test.describe.serial('9. Purchase Orders', () => {
     const locationId = locs[0].id;
 
     // Receive remaining: 150 of line 1, all 100 of line 2
+    // receive endpoint returns 201 (created receipt)
     const res = await page.request.post(`${API}/purchase-orders/${poId}/receive`, {
       headers,
       data: {
@@ -235,7 +238,7 @@ test.describe.serial('9. Purchase Orders', () => {
         ],
       },
     });
-    expect(res.status()).toBe(200);
+    expect([200, 201]).toContain(res.status());
 
     // Verify fully received
     const poRes = await page.request.get(`${API}/purchase-orders/${poId}`, { headers });

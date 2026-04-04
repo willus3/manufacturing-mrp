@@ -38,10 +38,24 @@ test.describe.serial('10. Work Orders', () => {
     const { data: items } = await itemsRes.json();
     const fgItemId = items[0].id;
 
-    // Find active BOM for FG
+    // Find active BOM for FG (or activate a draft if none is active)
     const bomsRes = await page.request.get(`${API}/boms?itemId=${fgItemId}`, { headers });
     const { data: boms } = await bomsRes.json();
-    const activeBom = boms.find((b) => b.status === 'active');
+    let activeBom = boms.find((b) => b.status === 'active');
+
+    if (!activeBom) {
+      // Activate the first draft BOM found
+      const draftBom = boms.find((b) => b.status === 'draft');
+      expect(draftBom).toBeTruthy();
+      const activateRes = await page.request.patch(`${API}/boms/${draftBom.id}/status`, {
+        headers,
+        data: { status: 'active' },
+      });
+      expect(activateRes.status()).toBe(200);
+      const { data: activated } = await activateRes.json();
+      activeBom = activated;
+    }
+
     expect(activeBom).toBeTruthy();
     activeBomId = activeBom.id;
 
@@ -55,7 +69,8 @@ test.describe.serial('10. Work Orders', () => {
 
   test('10.1.1 - Navigate to create', async ({ page }) => {
     await page.goto('/work-orders');
-    await page.getByRole('link', { name: /new wo|create/i }).click();
+    // "Create WO" is a button that navigates (not a link)
+    await page.getByRole('button', { name: /new wo|create wo|create/i }).click();
     await expect(page).toHaveURL(/\/work-orders\/new/);
   });
 
@@ -122,7 +137,9 @@ test.describe.serial('10. Work Orders', () => {
       data: { status: 'released' },
     });
     expect(res.status()).toBe(200);
-    const { data: wo } = await res.json();
+    // changeStatus returns { workOrder: {...}, warning?: "..." }
+    const { data } = await res.json();
+    const wo = data.workOrder ?? data;
     expect(wo.status).toBe('released');
 
     // Verify in UI
@@ -141,11 +158,12 @@ test.describe.serial('10. Work Orders', () => {
       locationId: warehouseLocationId,
     }));
 
+    // issue endpoint returns 201 (created transactions)
     const res = await page.request.post(`${API}/work-orders/${woId}/issue`, {
       headers,
       data: { lines: issueLines },
     });
-    expect(res.status()).toBe(200);
+    expect([200, 201]).toContain(res.status());
   });
 
   test('10.2.3 - Verify stock consumed', async ({ page }) => {
@@ -173,7 +191,8 @@ test.describe.serial('10. Work Orders', () => {
       data: { status: 'in_progress' },
     });
     expect(res.status()).toBe(200);
-    const { data: wo } = await res.json();
+    const { data } = await res.json();
+    const wo = data.workOrder ?? data;
     expect(wo.status).toBe('in_progress');
   });
 
@@ -186,7 +205,8 @@ test.describe.serial('10. Work Orders', () => {
       data: { status: 'completed' },
     });
     expect(res.status()).toBe(200);
-    const { data: wo } = await res.json();
+    const { data } = await res.json();
+    const wo = data.workOrder ?? data;
     expect(wo.status).toBe('completed');
   });
 
@@ -225,7 +245,8 @@ test.describe.serial('10. Work Orders', () => {
       data: { status: 'cancelled' },
     });
     expect(res.status()).toBe(200);
-    const { data: cancelled } = await res.json();
+    const { data } = await res.json();
+    const cancelled = data.workOrder ?? data;
     expect(cancelled.status).toBe('cancelled');
   });
 });

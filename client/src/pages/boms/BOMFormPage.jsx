@@ -31,9 +31,9 @@ const bomFormSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-const FormField = ({ label, error, children }) => (
+const FormField = ({ label, htmlFor, error, children }) => (
   <div className="space-y-1.5">
-    <Label className={error ? 'text-destructive' : ''}>{label}</Label>
+    <Label htmlFor={htmlFor} className={error ? 'text-destructive' : ''}>{label}</Label>
     {children}
     {error && <p className="text-sm text-destructive">{error}</p>}
   </div>
@@ -316,8 +316,9 @@ const BOMFormPage = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header fields */}
         <div className="max-w-2xl grid gap-4 sm:grid-cols-2">
-          <FormField label="Item (produces)" error={errors.itemId?.message}>
+          <FormField label="Item (produces)" htmlFor="itemId" error={errors.itemId?.message}>
             <select
+              id="itemId"
               {...register('itemId')}
               disabled={isEdit}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
@@ -333,14 +334,14 @@ const BOMFormPage = () => {
             </select>
           </FormField>
 
-          <FormField label="Revision" error={errors.revision?.message}>
-            <Input {...register('revision')} placeholder="e.g., A, Rev-1" disabled={!isDraft} />
+          <FormField label="Revision" htmlFor="revision" error={errors.revision?.message}>
+            <Input id="revision" {...register('revision')} placeholder="e.g., A, Rev-1" disabled={!isDraft} />
           </FormField>
         </div>
 
         <div className="max-w-2xl">
-          <FormField label="Notes" error={errors.notes?.message}>
-            <Input {...register('notes')} placeholder="Optional notes about this BOM" disabled={!isDraft} />
+          <FormField label="Notes" htmlFor="notes" error={errors.notes?.message}>
+            <Input id="notes" {...register('notes')} placeholder="Optional notes about this BOM" disabled={!isDraft} />
           </FormField>
         </div>
 

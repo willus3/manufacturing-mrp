@@ -82,12 +82,28 @@ test.describe.serial('13. Admin — Role Management', () => {
     token = await getToken(page);
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Fetch permissions to get UUIDs by code — API requires permissionIds (not string keys)
+    const permsRes = await page.request.get(`${API}/admin/permissions`, { headers });
+    const { data: allPerms } = await permsRes.json();
+    const wantedCodes = ['item:read', 'inventory:read', 'bom:read'];
+    const permissionIds = allPerms
+      .filter((p) => wantedCodes.includes(p.code))
+      .map((p) => p.id);
+    expect(permissionIds.length).toBe(3);
+
+    // Check if 'Quality Inspector' already exists from a prior test run — reuse if so
+    const rolesRes = await page.request.get(`${API}/admin/roles`, { headers });
+    const { data: existingRoles } = await rolesRes.json();
+    const existing = existingRoles.find((r) => r.name === 'Quality Inspector');
+    if (existing) {
+      customRoleId = existing.id;
+      expect(existing.isDefault).toBe(false);
+      return;
+    }
+
     const res = await page.request.post(`${API}/admin/roles`, {
       headers,
-      data: {
-        name: 'Quality Inspector',
-        permissions: ['item:read', 'inventory:read', 'bom:read'],
-      },
+      data: { name: 'Quality Inspector', permissionIds },
     });
     expect(res.status()).toBe(201);
     const { data: role } = await res.json();
@@ -99,12 +115,18 @@ test.describe.serial('13. Admin — Role Management', () => {
     token = await getToken(page);
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Fetch permissions to get UUIDs by code
+    const permsRes = await page.request.get(`${API}/admin/permissions`, { headers });
+    const { data: allPerms } = await permsRes.json();
+    const wantedCodes = ['item:read', 'inventory:read', 'bom:read', 'workorder:read'];
+    const permissionIds = allPerms
+      .filter((p) => wantedCodes.includes(p.code))
+      .map((p) => p.id);
+    expect(permissionIds.length).toBe(4);
+
     const res = await page.request.put(`${API}/admin/roles/${customRoleId}`, {
       headers,
-      data: {
-        name: 'Quality Inspector',
-        permissions: ['item:read', 'inventory:read', 'bom:read', 'workorder:read'],
-      },
+      data: { name: 'Quality Inspector', permissionIds },
     });
     expect(res.status()).toBe(200);
   });
@@ -113,12 +135,14 @@ test.describe.serial('13. Admin — Role Management', () => {
     token = await getToken(page);
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Fetch at least one permission UUID
+    const permsRes = await page.request.get(`${API}/admin/permissions`, { headers });
+    const { data: allPerms } = await permsRes.json();
+    const permissionIds = [allPerms.find((p) => p.code === 'item:read').id];
+
     const res = await page.request.post(`${API}/admin/roles`, {
       headers,
-      data: {
-        name: 'Admin',
-        permissions: ['item:read'],
-      },
+      data: { name: 'Admin', permissionIds },
     });
     expect(res.status()).toBe(409);
   });

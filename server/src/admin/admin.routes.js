@@ -17,6 +17,7 @@ router.get('/users/:id', adminController.getUser);
 router.post('/users', validate(createUserSchema), adminController.createUser);
 router.put('/users/:id', validate(updateUserSchema), adminController.updateUser);
 router.patch('/users/:id/deactivate', adminController.deactivateUser);
+router.patch('/users/:id/reactivate', adminController.reactivateUser);
 
 // Role management
 router.get('/roles', adminController.listRoles);

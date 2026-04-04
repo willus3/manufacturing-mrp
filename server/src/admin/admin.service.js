@@ -261,6 +261,28 @@ const deactivateUser = async (id, tenantId, requestingUserId) => {
 };
 
 // ============================================
+// REACTIVATE USER — re-enable a deactivated user
+// ============================================
+const reactivateUser = async (id, tenantId) => {
+  // Verify user exists in this tenant
+  await getUserById(id, tenantId);
+
+  const user = await prisma.user.update({
+    where: { id },
+    data: { isActive: true },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      isActive: true,
+    },
+  });
+
+  return user;
+};
+
+// ============================================
 // LIST ROLES — with permission details
 // ============================================
 const listRoles = async (tenantId) => {
@@ -421,6 +443,7 @@ module.exports = {
   createUser,
   updateUser,
   deactivateUser,
+  reactivateUser,
   listRoles,
   createRole,
   updateRole,

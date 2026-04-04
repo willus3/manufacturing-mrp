@@ -21,9 +21,9 @@ const locationFormSchema = z.object({
   description: z.string().max(1000).optional(),
 });
 
-const FormField = ({ label, error, children }) => (
+const FormField = ({ label, htmlFor, error, children }) => (
   <div className="space-y-1.5">
-    <Label className={error ? 'text-destructive' : ''}>{label}</Label>
+    <Label htmlFor={htmlFor} className={error ? 'text-destructive' : ''}>{label}</Label>
     {children}
     {error && <p className="text-sm text-destructive">{error}</p>}
   </div>
@@ -118,16 +118,16 @@ const LocationFormPage = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Location Name" error={errors.name?.message}>
-            <Input {...register('name')} placeholder="e.g., Warehouse A" />
+          <FormField label="Location Name" htmlFor="name" error={errors.name?.message}>
+            <Input id="name" {...register('name')} placeholder="e.g., Warehouse A" />
           </FormField>
-          <FormField label="Code" error={errors.code?.message}>
-            <Input {...register('code')} placeholder="e.g., WH-A" />
+          <FormField label="Code" htmlFor="code" error={errors.code?.message}>
+            <Input id="code" {...register('code')} placeholder="e.g., WH-A" />
           </FormField>
         </div>
 
-        <FormField label="Description" error={errors.description?.message}>
-          <Input {...register('description')} placeholder="Optional description" />
+        <FormField label="Description" htmlFor="description" error={errors.description?.message}>
+          <Input id="description" {...register('description')} placeholder="Optional description" />
         </FormField>
 
         <div className="flex items-center gap-3">

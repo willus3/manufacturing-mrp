@@ -52,10 +52,11 @@ const itemFormSchema = z.object({
 
 // ============================================
 // Form field component — keeps JSX clean
+// Requires htmlFor prop so the label is properly associated with the input (WCAG 2.1 AA).
 // ============================================
-const FormField = ({ label, error, children }) => (
+const FormField = ({ label, htmlFor, error, children }) => (
   <div className="space-y-1.5">
-    <Label className={error ? 'text-destructive' : ''}>{label}</Label>
+    <Label htmlFor={htmlFor} className={error ? 'text-destructive' : ''}>{label}</Label>
     {children}
     {error && <p className="text-sm text-destructive">{error}</p>}
   </div>
@@ -177,22 +178,23 @@ const ItemFormPage = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
         {/* Core fields */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Part Number" error={errors.partNumber?.message}>
-            <Input {...register('partNumber')} placeholder="e.g., RM-001" />
+          <FormField label="Part Number" htmlFor="partNumber" error={errors.partNumber?.message}>
+            <Input id="partNumber" {...register('partNumber')} placeholder="e.g., RM-001" />
           </FormField>
 
-          <FormField label="Unit of Measure" error={errors.unitOfMeasure?.message}>
-            <Input {...register('unitOfMeasure')} placeholder="e.g., ea, kg, ft" />
+          <FormField label="Unit of Measure" htmlFor="unitOfMeasure" error={errors.unitOfMeasure?.message}>
+            <Input id="unitOfMeasure" {...register('unitOfMeasure')} placeholder="e.g., ea, kg, ft" />
           </FormField>
         </div>
 
-        <FormField label="Description" error={errors.description?.message}>
-          <Input {...register('description')} placeholder="Describe the item" />
+        <FormField label="Description" htmlFor="description" error={errors.description?.message}>
+          <Input id="description" {...register('description')} placeholder="Describe the item" />
         </FormField>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="Type" error={errors.type?.message}>
+          <FormField label="Type" htmlFor="type" error={errors.type?.message}>
             <select
+              id="type"
               {...register('type')}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
@@ -205,8 +207,9 @@ const ItemFormPage = () => {
             </select>
           </FormField>
 
-          <FormField label="Tracking Method" error={errors.trackingMethod?.message}>
+          <FormField label="Tracking Method" htmlFor="trackingMethod" error={errors.trackingMethod?.message}>
             <select
+              id="trackingMethod"
               {...register('trackingMethod')}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
@@ -221,8 +224,9 @@ const ItemFormPage = () => {
 
         {/* Inventory planning fields */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <FormField label="Reorder Point" error={errors.reorderPoint?.message}>
+          <FormField label="Reorder Point" htmlFor="reorderPoint" error={errors.reorderPoint?.message}>
             <Input
+              id="reorderPoint"
               type="number"
               min="0"
               step="any"
@@ -231,8 +235,9 @@ const ItemFormPage = () => {
             />
           </FormField>
 
-          <FormField label="Reorder Quantity" error={errors.reorderQuantity?.message}>
+          <FormField label="Reorder Quantity" htmlFor="reorderQuantity" error={errors.reorderQuantity?.message}>
             <Input
+              id="reorderQuantity"
               type="number"
               min="0"
               step="any"
@@ -241,8 +246,9 @@ const ItemFormPage = () => {
             />
           </FormField>
 
-          <FormField label="Lead Time (days)" error={errors.leadTimeDays?.message}>
+          <FormField label="Lead Time (days)" htmlFor="leadTimeDays" error={errors.leadTimeDays?.message}>
             <Input
+              id="leadTimeDays"
               type="number"
               min="0"
               step="1"

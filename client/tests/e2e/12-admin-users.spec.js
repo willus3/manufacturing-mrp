@@ -78,6 +78,24 @@ test.describe.serial('12. Admin — User Management', () => {
     token = await getToken(page);
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Check if Jane already exists from a prior run
+    const searchRes = await page.request.get(`${API}/admin/users?search=jane`, { headers });
+    const { data: existingUsers } = await searchRes.json();
+    const existingJane = existingUsers.find((u) => u.email === 'jane@test.com');
+    if (existingJane) {
+      janeUserId = existingJane.id;
+      // Re-activate if deactivated
+      if (!existingJane.isActive) {
+        await page.request.patch(`${API}/admin/users/${janeUserId}/reactivate`, { headers });
+      }
+      // Reset password and role for subsequent tests
+      await page.request.put(`${API}/admin/users/${janeUserId}`, {
+        headers,
+        data: { password: 'testpass123', roleIds: [shopFloorRoleId] },
+      });
+      return;
+    }
+
     const res = await page.request.post(`${API}/admin/users`, {
       headers,
       data: {

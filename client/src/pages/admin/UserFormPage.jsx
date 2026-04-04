@@ -36,9 +36,9 @@ const editSchema = z.object({
 });
 
 // ---- Reusable form field ----
-const FormField = ({ label, error, children }) => (
+const FormField = ({ label, htmlFor, error, children }) => (
   <div className="space-y-1.5">
-    <Label className={error ? 'text-destructive' : ''}>{label}</Label>
+    <Label htmlFor={htmlFor} className={error ? 'text-destructive' : ''}>{label}</Label>
     {children}
     {error && <p className="text-sm text-destructive">{error}</p>}
   </div>
@@ -157,25 +157,27 @@ const UserFormPage = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
         {/* Name fields */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label="First Name" error={errors.firstName?.message}>
-            <Input {...register('firstName')} placeholder="e.g., Jane" />
+          <FormField label="First Name" htmlFor="firstName" error={errors.firstName?.message}>
+            <Input id="firstName" {...register('firstName')} placeholder="e.g., Jane" />
           </FormField>
-          <FormField label="Last Name" error={errors.lastName?.message}>
-            <Input {...register('lastName')} placeholder="e.g., Smith" />
+          <FormField label="Last Name" htmlFor="lastName" error={errors.lastName?.message}>
+            <Input id="lastName" {...register('lastName')} placeholder="e.g., Smith" />
           </FormField>
         </div>
 
         {/* Email */}
-        <FormField label="Email" error={errors.email?.message}>
-          <Input {...register('email')} type="email" placeholder="user@company.com" />
+        <FormField label="Email" htmlFor="email" error={errors.email?.message}>
+          <Input id="email" {...register('email')} type="email" placeholder="user@company.com" />
         </FormField>
 
         {/* Password */}
         <FormField
           label={isEdit ? 'New Password (leave blank to keep current)' : 'Password'}
+          htmlFor="password"
           error={errors.password?.message}
         >
           <Input
+            id="password"
             {...register('password')}
             type="password"
             placeholder={isEdit ? 'Leave blank to keep unchanged' : 'Minimum 8 characters'}
