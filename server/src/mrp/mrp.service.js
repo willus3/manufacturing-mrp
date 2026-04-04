@@ -360,12 +360,23 @@ const explodeBom = async (tenantId, itemId, parentQty, dateNeeded, requirements,
   const nextVisited = new Set(visited);
   nextVisited.add(itemId);
 
+  // Cascade lead time: children need to be ready before this item can be produced.
+  // Subtract the current item's lead time from dateNeeded so deeper components get
+  // progressively earlier dates (e.g., demand June 30 → sub-assembly June 25 → raw material June 22).
+  const currentItem = await prisma.item.findUnique({
+    where: { id: itemId },
+    select: { leadTimeDays: true },
+  });
+  const parentLeadTime = currentItem?.leadTimeDays || 0;
+  const childDateNeeded = new Date(dateNeeded);
+  childDateNeeded.setDate(childDateNeeded.getDate() - parentLeadTime);
+
   for (const line of bom.bomLines) {
     // Component qty = BOM line qty × parent qty × (1 + scrapFactor), rounded to avoid floating point noise
     const componentQty = Math.round(Number(line.quantity) * parentQty * (1 + Number(line.scrapFactor || 0)) * 100) / 100;
 
-    // Recurse into sub-components
-    await explodeBom(tenantId, line.itemId, componentQty, dateNeeded, requirements, nextVisited);
+    // Recurse into sub-components with the cascaded date
+    await explodeBom(tenantId, line.itemId, componentQty, childDateNeeded, requirements, nextVisited);
   }
 };
 
