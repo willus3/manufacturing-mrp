@@ -296,4 +296,4 @@ const transfer = async (data, tenantId, userId) => {
   });
 };
 
-module.exports = { listStock, stockSummary, listTransactions, adjust, transfer };
+module.exports = { listStock, stockSummary, listTransactions, adjust, transfer, upsertStock };

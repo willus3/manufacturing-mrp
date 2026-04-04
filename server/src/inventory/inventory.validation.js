@@ -48,10 +48,22 @@ const transferSchema = z.object({
   serialNumber: z.string().max(100).optional().nullable(),
 });
 
+/** Schema for a single row in the inventory import CSV.
+ * Uses human-readable partNumber + locationCode (resolved server-side).
+ */
+const inventoryImportRowSchema = z.object({
+  partNumber: z.string().min(1, 'partNumber is required').max(100),
+  locationCode: z.string().min(1, 'locationCode is required').max(50),
+  quantity: z.coerce.number().positive('Quantity must be positive'),
+  lotNumber: z.string().max(100).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
 module.exports = {
   listStockQuery,
   stockSummaryQuery,
   listTransactionsQuery,
   adjustSchema,
   transferSchema,
+  inventoryImportRowSchema,
 };

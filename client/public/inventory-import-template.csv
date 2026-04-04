@@ -1,0 +1,3 @@
+partNumber,locationCode,quantity,lotNumber,notes
+EXAMPLE-001,WH-MAIN,100,,Initial stock
+EXAMPLE-002,WH-MAIN,50,LOT-2024-001,From supplier shipment

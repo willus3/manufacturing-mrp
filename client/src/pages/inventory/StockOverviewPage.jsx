@@ -1,12 +1,16 @@
 // Stock Overview page — /inventory
 // Shows current inventory stock with item/location details, filterable.
 
-import { useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Upload } from 'lucide-react';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/DataTable';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const INVENTORY_STATUSES = ['available', 'allocated', 'quarantine', 'in_transit', 'issued'];
 
@@ -78,6 +82,10 @@ const StockOverviewPage = () => {
   const [itemFilter, setItemFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef(null);
+  const queryClient = useQueryClient();
+  const { hasPermission } = useAuth();
 
   // Load items and locations for filter dropdowns
   const { data: itemsData } = useQuery({
@@ -110,11 +118,68 @@ const StockOverviewPage = () => {
   const handleLocationChange = useCallback((e) => { setLocationFilter(e.target.value); setPage(1); }, []);
   const handleStatusChange = useCallback((e) => { setStatusFilter(e.target.value); setPage(1); }, []);
 
+  const handleImport = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const result = await api.upload('/inventory/import', formData);
+      const d = result.data;
+
+      queryClient.invalidateQueries({ queryKey: ['inventory-stock'] });
+
+      let msg = `Imported ${d.imported} row(s).`;
+      if (d.skipped) msg += ` ${d.skipped.join('. ')}`;
+      if (d.errors) msg += ` ${d.errors.length} row(s) had errors.`;
+      toast.success(msg);
+
+      if (d.errors?.length > 0) {
+        console.log('Inventory import errors:', d.errors);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Import failed');
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }, [queryClient]);
+
   return (
     <div className="space-y-6">
       <PageHeader title="Inventory Stock" />
 
       <div className="flex flex-wrap items-center gap-4">
+        {hasPermission('inventory:write') && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleImport}
+              className="hidden"
+              aria-label="Import inventory CSV"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImporting}
+            >
+              <Upload className="mr-1 h-4 w-4" />
+              {isImporting ? 'Importing...' : 'Import CSV'}
+            </Button>
+            <a
+              href="/inventory-import-template.csv"
+              download
+              className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Download template
+            </a>
+          </>
+        )}
         <select
           value={itemFilter}
           onChange={handleItemChange}

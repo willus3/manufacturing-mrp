@@ -17,6 +17,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import PageHeader from '@/components/shared/PageHeader';
+import BOMTreeView from '@/components/shared/BOMTreeView';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -405,6 +406,19 @@ const BOMFormPage = () => {
           )}
         </div>
       </form>
+
+      {/* BOM Explosion Tree — only shown in edit mode, reflects saved state */}
+      {isEdit && (
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold">BOM Explosion Tree</h2>
+            <p className="text-sm text-muted-foreground">
+              Multi-level structure of this BOM. Save changes above to refresh.
+            </p>
+          </div>
+          <BOMTreeView bomId={id} />
+        </div>
+      )}
     </div>
   );
 };
