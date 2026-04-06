@@ -377,6 +377,7 @@ model PurchaseOrderLine {
   id               String   @id @default(uuid())
   purchaseOrderId  String
   itemId           String
+  workOrderId      String?
   quantityOrdered  Decimal
   quantityReceived Decimal  @default(0)
   unitCost         Decimal?
@@ -388,6 +389,7 @@ model PurchaseOrderLine {
   // Relations
   purchaseOrder PurchaseOrder        @relation(fields: [purchaseOrderId], references: [id])
   item          Item                 @relation(fields: [itemId], references: [id])
+  workOrder     WorkOrder?           @relation(fields: [workOrderId], references: [id])
   receipts      PurchaseOrderReceipt[]
 }
 
@@ -432,10 +434,11 @@ model WorkOrder {
   updatedAt      DateTime      @updatedAt
 
   // Relations
-  tenant  Tenant          @relation(fields: [tenantId], references: [id])
-  bom     Bom             @relation(fields: [bomId], references: [id])
-  creator User            @relation(fields: [createdBy], references: [id])
-  lines   WorkOrderLine[]
+  tenant             Tenant              @relation(fields: [tenantId], references: [id])
+  bom                Bom                 @relation(fields: [bomId], references: [id])
+  creator            User                @relation(fields: [createdBy], references: [id])
+  lines              WorkOrderLine[]
+  purchaseOrderLines PurchaseOrderLine[]
 
   @@unique([tenantId, woNumber])
 }

@@ -27,6 +27,8 @@ router.get('/runs', mrpController.listRuns);
 router.get('/runs/:id/results', mrpController.getRunResults);
 
 // Result actions
+// Note: convert-bulk must come before /:resultId/convert so Express doesn't treat "convert-bulk" as a resultId
+router.post('/runs/:id/results/convert-bulk', mrpController.convertBulkResults);
 router.post('/runs/:id/results/:resultId/convert', mrpController.convertResult);
 router.patch('/runs/:id/results/:resultId/dismiss', mrpController.dismissResult);
 

@@ -45,6 +45,10 @@ const listResultsQuery = z.object({
   status: z.enum(MRP_RESULT_STATUSES).optional(),
 });
 
+const bulkConvertSchema = z.object({
+  resultIds: z.array(z.string().uuid()).min(1, 'At least one result ID required').max(100),
+});
+
 module.exports = {
   DEMAND_STATUSES,
   MRP_ACTION_TYPES,
@@ -55,4 +59,5 @@ module.exports = {
   runMrpSchema,
   listRunsQuery,
   listResultsQuery,
+  bulkConvertSchema,
 };

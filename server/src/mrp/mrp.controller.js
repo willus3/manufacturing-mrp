@@ -10,6 +10,7 @@ const {
   runMrpSchema,
   listRunsQuery,
   listResultsQuery,
+  bulkConvertSchema,
 } = require('./mrp.validation');
 
 // ============================================
@@ -104,6 +105,19 @@ const getRunResults = async (req, res, next) => {
   }
 };
 
+/** POST /mrp/runs/:id/results/convert-bulk — consolidate multiple purchase suggestions into POs by supplier. */
+const convertBulkResults = async (req, res, next) => {
+  try {
+    const { resultIds } = bulkConvertSchema.parse(req.body);
+    const result = await mrpService.convertBulkToPO(
+      req.params.id, resultIds, req.tenantId, req.user.userId
+    );
+    sendSuccess(res, result, null, 201);
+  } catch (err) {
+    next(err);
+  }
+};
+
 /** POST /mrp/runs/:id/results/:resultId/convert — convert suggestion to PO or WO. */
 const convertResult = async (req, res, next) => {
   try {
@@ -135,6 +149,7 @@ module.exports = {
   runMrp,
   listRuns,
   getRunResults,
+  convertBulkResults,
   convertResult,
   dismissResult,
 };

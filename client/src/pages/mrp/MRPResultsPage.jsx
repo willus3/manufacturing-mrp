@@ -36,6 +36,8 @@ const MRPResultsPage = () => {
   const queryClient = useQueryClient();
   const [actionFilter, setActionFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  // Selected purchase suggestion IDs for bulk PO creation
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   const { data, isLoading } = useQuery({
     queryKey: ['mrp-results', runId, { actionType: actionFilter, status: statusFilter }],
@@ -81,20 +83,87 @@ const MRPResultsPage = () => {
     onError: (err) => toast.error(err.message || 'Dismiss failed'),
   });
 
+  // Bulk convert mutation — groups selected purchase suggestions by supplier into POs
+  const bulkConvertMutation = useMutation({
+    mutationFn: (resultIds) =>
+      api.post(`/mrp/runs/${runId}/results/convert-bulk`, { resultIds }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mrp-results'] });
+      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
+      const { converted, purchaseOrdersCreated } = data.data;
+      toast.success(
+        `Created ${purchaseOrdersCreated} PO${purchaseOrdersCreated !== 1 ? 's' : ''} from ${converted} suggestion${converted !== 1 ? 's' : ''}`
+      );
+      setSelectedIds(new Set());
+    },
+    onError: (err) => toast.error(err.message || 'Bulk conversion failed'),
+  });
+
   const handleActionFilterChange = useCallback((e) => setActionFilter(e.target.value), []);
   const handleStatusFilterChange = useCallback((e) => setStatusFilter(e.target.value), []);
 
-  // Renders a results table for a given action type
+  const toggleSelect = useCallback((id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // Renders a results table for a given action type.
+  // Purchase tables support bulk selection via checkboxes.
   const ResultsTable = ({ title, rows, actionType }) => {
     if (rows.length === 0) return null;
 
+    const suggestedRows = rows.filter((r) => r.status === 'suggested');
+    const allSuggestedSelected =
+      suggestedRows.length > 0 && suggestedRows.every((r) => selectedIds.has(r.id));
+
+    const toggleSelectAll = () => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (allSuggestedSelected) {
+          suggestedRows.forEach((r) => next.delete(r.id));
+        } else {
+          suggestedRows.forEach((r) => next.add(r.id));
+        }
+        return next;
+      });
+    };
+
     return (
       <div className="space-y-3">
-        <Label className="text-base font-semibold">{title} ({rows.length})</Label>
+        <div className="flex items-center gap-3">
+          <Label className="text-base font-semibold">{title} ({rows.length})</Label>
+          {actionType === 'purchase' && selectedIds.size > 0 && (
+            <Button
+              size="sm"
+              onClick={() => bulkConvertMutation.mutate([...selectedIds])}
+              disabled={bulkConvertMutation.isPending}
+            >
+              {bulkConvertMutation.isPending
+                ? 'Creating...'
+                : `Create POs (${selectedIds.size} selected)`}
+            </Button>
+          )}
+        </div>
         <div className="rounded-md border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
+                {actionType === 'purchase' && (
+                  <th className="px-3 py-2 w-8">
+                    {suggestedRows.length > 0 && (
+                      <input
+                        type="checkbox"
+                        checked={allSuggestedSelected}
+                        onChange={toggleSelectAll}
+                        aria-label="Select all suggested"
+                        className="cursor-pointer"
+                      />
+                    )}
+                  </th>
+                )}
                 <th className="px-3 py-2 text-left font-medium">Item</th>
                 <th className="px-3 py-2 text-left font-medium">UOM</th>
                 <th className="px-3 py-2 text-left font-medium w-28">Qty Needed</th>
@@ -110,6 +179,19 @@ const MRPResultsPage = () => {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-b last:border-0">
+                  {actionType === 'purchase' && (
+                    <td className="px-3 py-2">
+                      {r.status === 'suggested' && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(r.id)}
+                          onChange={() => toggleSelect(r.id)}
+                          aria-label={`Select ${r.item?.partNumber}`}
+                          className="cursor-pointer"
+                        />
+                      )}
+                    </td>
+                  )}
                   <td className="px-3 py-2">
                     {r.item?.partNumber} — {r.item?.description}
                   </td>

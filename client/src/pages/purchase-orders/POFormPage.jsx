@@ -51,9 +51,9 @@ const STATUS_VARIANTS = {
 // ============================================
 // PO Line Editor component
 // ============================================
-const POLineEditor = ({ lines, onChange, disabled, items }) => {
+const POLineEditor = ({ lines, onChange, disabled, items, workOrders }) => {
   const addLine = () => {
-    onChange([...lines, { itemId: '', quantityOrdered: 1, unitCost: '' }]);
+    onChange([...lines, { itemId: '', workOrderId: '', quantityOrdered: 1, unitCost: '' }]);
   };
 
   const removeLine = (idx) => {
@@ -86,6 +86,7 @@ const POLineEditor = ({ lines, onChange, disabled, items }) => {
                 <th className="px-3 py-2 text-left font-medium">Item</th>
                 <th className="px-3 py-2 text-left font-medium w-28">Qty Ordered</th>
                 <th className="px-3 py-2 text-left font-medium w-28">Unit Cost</th>
+                <th className="px-3 py-2 text-left font-medium w-36">For WO</th>
                 {!disabled && <th className="px-3 py-2 w-12" />}
               </tr>
             </thead>
@@ -129,6 +130,22 @@ const POLineEditor = ({ lines, onChange, disabled, items }) => {
                       placeholder="0.00"
                       className="h-8"
                     />
+                  </td>
+                  <td className="px-3 py-2">
+                    {/* Optional link to the work order this line supplies */}
+                    <select
+                      value={line.workOrderId || ''}
+                      onChange={(e) => updateLine(idx, 'workOrderId', e.target.value || null)}
+                      disabled={disabled}
+                      className="w-full rounded border border-input bg-transparent px-2 py-1 text-sm"
+                    >
+                      <option value="">None</option>
+                      {workOrders.map((wo) => (
+                        <option key={wo.id} value={wo.id}>
+                          {wo.woNumber}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   {!disabled && (
                     <td className="px-3 py-2">
@@ -232,6 +249,17 @@ const POFormPage = () => {
   });
   const allItems = itemsData?.data ?? [];
 
+  // Load open work orders for the WO link dropdown (planned, released, in_progress)
+  // Fetch all without a status filter, then trim to active statuses client-side
+  const { data: workOrdersData } = useQuery({
+    queryKey: ['work-orders', 'open'],
+    queryFn: () => api.get('/work-orders?pageSize=200&sort=woNumber&order=asc'),
+  });
+  const OPEN_WO_STATUSES = ['planned', 'released', 'in_progress'];
+  const openWorkOrders = (workOrdersData?.data ?? []).filter((wo) =>
+    OPEN_WO_STATUSES.includes(wo.status)
+  );
+
   const isDraft = !isEdit || existingPO?.data?.status === 'draft';
   const status = existingPO?.data?.status;
 
@@ -258,6 +286,7 @@ const POFormPage = () => {
       setLines(
         po.lines.map((line) => ({
           itemId: line.itemId,
+          workOrderId: line.workOrderId ?? '',
           quantityOrdered: Number(line.quantityOrdered),
           unitCost: line.unitCost ? Number(line.unitCost) : '',
         }))
@@ -275,6 +304,7 @@ const POFormPage = () => {
         notes: headerData.notes || null,
         lines: lines.map((line) => ({
           itemId: line.itemId,
+          workOrderId: line.workOrderId || null,
           quantityOrdered: Number(line.quantityOrdered),
           unitCost: line.unitCost ? Number(line.unitCost) : null,
         })),
@@ -395,6 +425,7 @@ const POFormPage = () => {
             onChange={setLines}
             disabled={!isDraft}
             items={allItems}
+            workOrders={openWorkOrders}
           />
         ) : (
           // Read-only line display for non-draft POs
@@ -408,6 +439,7 @@ const POFormPage = () => {
                     <th className="px-3 py-2 text-left font-medium w-28">Ordered</th>
                     <th className="px-3 py-2 text-left font-medium w-28">Received</th>
                     <th className="px-3 py-2 text-left font-medium w-28">Unit Cost</th>
+                    <th className="px-3 py-2 text-left font-medium w-28">For WO</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -424,6 +456,11 @@ const POFormPage = () => {
                       </td>
                       <td className="px-3 py-2">
                         {line.unitCost ? `$${Number(line.unitCost).toFixed(2)}` : '—'}
+                      </td>
+                      <td className="px-3 py-2">
+                        {line.workOrder
+                          ? <Badge variant="outline">{line.workOrder.woNumber}</Badge>
+                          : <span className="text-muted-foreground">—</span>}
                       </td>
                     </tr>
                   ))}

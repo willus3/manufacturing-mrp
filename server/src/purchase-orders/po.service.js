@@ -99,6 +99,7 @@ const getById = async (id, tenantId) => {
       lines: {
         include: {
           item: { select: { id: true, partNumber: true, description: true, unitOfMeasure: true } },
+          workOrder: { select: { id: true, woNumber: true } },
           receipts: {
             include: {
               location: { select: { id: true, code: true, name: true } },
@@ -146,6 +147,7 @@ const create = async (data, tenantId, userId) => {
         lines: {
           create: lines.map((line) => ({
             itemId: line.itemId,
+            workOrderId: line.workOrderId ?? null,
             quantityOrdered: line.quantityOrdered,
             unitCost: line.unitCost ?? null,
             dueDate: line.dueDate ?? null,
@@ -158,6 +160,7 @@ const create = async (data, tenantId, userId) => {
         lines: {
           include: {
             item: { select: { id: true, partNumber: true, description: true, unitOfMeasure: true } },
+            workOrder: { select: { id: true, woNumber: true } },
           },
         },
       },
@@ -198,6 +201,7 @@ const update = async (id, data, tenantId) => {
         data: lines.map((line) => ({
           purchaseOrderId: id,
           itemId: line.itemId,
+          workOrderId: line.workOrderId ?? null,
           quantityOrdered: line.quantityOrdered,
           unitCost: line.unitCost ?? null,
           dueDate: line.dueDate ?? null,
@@ -219,6 +223,7 @@ const update = async (id, data, tenantId) => {
         lines: {
           include: {
             item: { select: { id: true, partNumber: true, description: true, unitOfMeasure: true } },
+            workOrder: { select: { id: true, woNumber: true } },
           },
         },
       },

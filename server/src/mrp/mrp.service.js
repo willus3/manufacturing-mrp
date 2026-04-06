@@ -607,6 +607,136 @@ const convertToWO = async (result, tenantId, userId) => {
   });
 };
 
+/**
+ * Bulk convert multiple purchase suggestions into consolidated POs (one per supplier).
+ * Accepts an array of result IDs; groups them by supplier and creates one draft PO per group.
+ */
+const convertBulkToPO = async (runId, resultIds, tenantId, userId) => {
+  // Fetch all results for validation
+  const results = await prisma.mrpResult.findMany({
+    where: { id: { in: resultIds }, mrpRunId: runId },
+    include: {
+      mrpRun: { select: { tenantId: true } },
+      item: { select: { id: true, type: true, partNumber: true } },
+    },
+  });
+
+  if (results.length !== resultIds.length) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'One or more result IDs not found in this run');
+  }
+  for (const r of results) {
+    if (r.mrpRun.tenantId !== tenantId) throw notFoundError('MRP result not found');
+    if (r.status !== 'suggested') {
+      throw new AppError(400, 'INVALID_STATUS', `Result for ${r.item.partNumber} is already ${r.status}`);
+    }
+    if (r.actionType !== 'purchase') {
+      throw new AppError(400, 'VALIDATION_ERROR', `Result for ${r.item.partNumber} is a produce suggestion — use single convert`);
+    }
+  }
+
+  // Resolve supplier for each result (preferred → any → error)
+  const resultsWithSupplier = [];
+  for (const r of results) {
+    let supplierId = r.supplierId;
+    if (!supplierId) {
+      const preferred = await prisma.itemSupplier.findFirst({
+        where: { itemId: r.itemId, isPreferred: true },
+        select: { supplierId: true },
+      });
+      if (preferred) supplierId = preferred.supplierId;
+    }
+    if (!supplierId) {
+      const any = await prisma.itemSupplier.findFirst({
+        where: { itemId: r.itemId },
+        select: { supplierId: true },
+      });
+      if (any) supplierId = any.supplierId;
+    }
+    if (!supplierId) {
+      throw new AppError(400, 'NO_SUPPLIER', `No supplier linked to item "${r.item.partNumber}". Link a supplier first.`);
+    }
+    resultsWithSupplier.push({ ...r, resolvedSupplierId: supplierId });
+  }
+
+  // Group by supplier
+  const bySupplier = new Map();
+  for (const r of resultsWithSupplier) {
+    if (!bySupplier.has(r.resolvedSupplierId)) bySupplier.set(r.resolvedSupplierId, []);
+    bySupplier.get(r.resolvedSupplierId).push(r);
+  }
+
+  return prisma.$transaction(async (tx) => {
+    const purchaseOrders = [];
+
+    for (const [supplierId, groupResults] of bySupplier) {
+      // Generate next PO number within the transaction to avoid collisions
+      const last = await tx.purchaseOrder.findFirst({
+        where: { tenantId },
+        orderBy: { poNumber: 'desc' },
+        select: { poNumber: true },
+      });
+      const nextNum = last ? parseInt(last.poNumber.replace('PO-', ''), 10) + 1 : 1;
+      const poNumber = `PO-${String(nextNum).padStart(4, '0')}`;
+
+      // Build one line per result; look up unit cost from item-supplier link
+      const lineData = [];
+      for (const r of groupResults) {
+        const itemSupplier = await tx.itemSupplier.findFirst({
+          where: { itemId: r.itemId, supplierId },
+          select: { unitCost: true },
+        });
+        lineData.push({
+          itemId: r.itemId,
+          quantityOrdered: r.quantityNeeded,
+          unitCost: itemSupplier?.unitCost ?? null,
+          dueDate: r.dateNeeded,
+        });
+      }
+
+      // Use earliest dateNeeded as the PO's expected delivery date
+      const earliestDate = groupResults.reduce(
+        (min, r) => (r.dateNeeded < min ? r.dateNeeded : min),
+        groupResults[0].dateNeeded
+      );
+
+      const po = await tx.purchaseOrder.create({
+        data: {
+          tenantId,
+          poNumber,
+          supplierId,
+          status: 'draft',
+          expectedDate: earliestDate,
+          notes: `Auto-generated from MRP run (${groupResults.length} item${groupResults.length > 1 ? 's' : ''})`,
+          createdBy: userId,
+          lines: { create: lineData },
+        },
+        include: {
+          supplier: { select: { id: true, name: true, code: true } },
+          lines: {
+            include: { item: { select: { id: true, partNumber: true, description: true } } },
+          },
+        },
+      });
+
+      // Mark all results in this group as converted
+      for (const r of groupResults) {
+        await tx.mrpResult.update({
+          where: { id: r.id },
+          data: { status: 'converted', convertedToId: po.id, convertedToType: 'purchase_order' },
+        });
+      }
+
+      purchaseOrders.push(po);
+    }
+
+    return {
+      purchaseOrders,
+      converted: resultIds.length,
+      purchaseOrdersCreated: purchaseOrders.length,
+    };
+  });
+};
+
 /** Dismiss an MRP result. */
 const dismissResult = async (runId, resultId, tenantId) => {
   const result = await prisma.mrpResult.findFirst({
@@ -635,5 +765,6 @@ module.exports = {
   listRuns,
   getRunResults,
   convertResult,
+  convertBulkToPO,
   dismissResult,
 };

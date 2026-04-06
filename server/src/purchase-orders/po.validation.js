@@ -9,6 +9,7 @@ const PO_STATUSES = ['draft', 'sent', 'partial', 'received', 'cancelled'];
 
 const poLineSchema = z.object({
   itemId: z.string().uuid('Invalid item ID'),
+  workOrderId: z.string().uuid('Invalid work order ID').optional().nullable(),
   quantityOrdered: z.coerce.number().positive('Quantity must be positive'),
   unitCost: z.coerce.number().min(0, 'Unit cost cannot be negative').optional().nullable(),
   dueDate: z.coerce.date().optional().nullable(),
